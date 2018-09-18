@@ -47,18 +47,82 @@ func (n NBT) GetEnd() (e End, ok bool) {
 	return End{}, true
 }
 
-// GetByte returns the Byte value, plus a boolean indicating whether
-// the NBT in question was in fact a TagByte.
-func (n NBT) GetByte() (b Byte, ok bool) {
+// GetByte returns the Byte value.
+func (n NBT) GetByte() (o Byte, ok bool) {
 	if n.Type != TagByte {
 		return 0, false
 	}
 	// handle nil payload with zero value
 	if n.payload == nil {
-		return b, true
+		return o, true
 	}
-	b = n.payload.(Byte)
-	return b, true
+	o = n.payload.(Byte)
+	return o, true
+}
+
+// GetShort returns the Short value.
+func (n NBT) GetShort() (o Short, ok bool) {
+	if n.Type != TagShort {
+		return 0, false
+	}
+	// handle nil payload with zero value
+	if n.payload == nil {
+		return o, true
+	}
+	o = n.payload.(Short)
+	return o, true
+}
+
+// GetInt returns the Int value.
+func (n NBT) GetInt() (o Int, ok bool) {
+	if n.Type != TagInt {
+		return 0, false
+	}
+	// handle nil payload with zero value
+	if n.payload == nil {
+		return o, true
+	}
+	o = n.payload.(Int)
+	return o, true
+}
+
+// GetLong returns the Long value.
+func (n NBT) GetLong() (o Long, ok bool) {
+	if n.Type != TagLong {
+		return 0, false
+	}
+	// handle nil payload with zero value
+	if n.payload == nil {
+		return o, true
+	}
+	o = n.payload.(Long)
+	return o, true
+}
+
+// GetFloat returns the Float value.
+func (n NBT) GetFloat() (o Float, ok bool) {
+	if n.Type != TagFloat {
+		return 0, false
+	}
+	// handle nil payload with zero value
+	if n.payload == nil {
+		return o, true
+	}
+	o = n.payload.(Float)
+	return o, true
+}
+
+// GetLong returns the Double value.
+func (n NBT) GetDouble() (o Double, ok bool) {
+	if n.Type != TagDouble {
+		return 0, false
+	}
+	// handle nil payload with zero value
+	if n.payload == nil {
+		return o, true
+	}
+	o = n.payload.(Double)
+	return o, true
 }
 
 // GetString returns the String value, plus a boolean indicating
@@ -73,6 +137,30 @@ func (n NBT) GetString() (s String, ok bool) {
 	}
 	s = n.payload.(String)
 	return s, true
+}
+
+// GetList returns the List value.
+func (n NBT) GetList() (o List, ok bool) {
+	if n.Type != TagList {
+		return o, false
+	}
+	if n.payload == nil {
+		return o, true
+	}
+	o = n.payload.(List)
+	return o, true
+}
+
+// GetCompound returns the Compound value.
+func (n NBT) GetCompound() (o Compound, ok bool) {
+	if n.Type != TagCompound {
+		return o, false
+	}
+	if n.payload == nil {
+		return o, true
+	}
+	o = n.payload.(Compound)
+	return o, true
 }
 
 // Store stores `n` to the provided io.Writer. It does
@@ -146,6 +234,12 @@ type Payload interface {
 	store(w io.Writer) error
 }
 
+// NBTNamed takes a payload (such as a Compound, or String) and
+// wraps it into an NBT object with the given name.
+func NBTNamed(name string, payload Payload) NBT {
+	return NBT{Type: payload.Type(), Name: name, payload: payload}
+}
+
 // End doesn't even have a name, let alone contents.
 type End struct{}
 type Byte int8
@@ -156,17 +250,13 @@ type Float float32
 type Double float64
 type ByteArray []int8
 type String string
-type listInternal interface {
-	Len() int
-	ElemType() Tag
-	Elem(i int) NBT
-}
 type List struct {
-	internal listInternal
+	typ  Tag
+	data []NBT
 }
 type Compound map[string]NBT
-type IntArray []int32
-type LongArray []int64
+type IntArray []Int
+type LongArray []Long
 
 var _ Payload = End{}
 
@@ -184,6 +274,110 @@ func (p List) Type() Tag      { return TagList }
 func (p Compound) Type() Tag  { return TagCompound }
 func (p IntArray) Type() Tag  { return TagIntArray }
 func (p LongArray) Type() Tag { return TagLongArray }
+
+func (n NBT) String() string {
+	switch n.Type {
+	default:
+		return fmt.Sprintf("[unknown tag %v]", n.Type)
+	case TagEnd:
+		return ""
+	case TagByte:
+		x, _ := n.GetByte()
+		return fmt.Sprintf("%q", x)
+	case TagShort:
+		x, _ := n.GetShort()
+		return fmt.Sprintf("%d", x)
+	case TagInt:
+		x, _ := n.GetInt()
+		return fmt.Sprintf("%d", x)
+	case TagLong:
+		x, _ := n.GetLong()
+		return fmt.Sprintf("%d", x)
+	case TagFloat:
+		x, _ := n.GetFloat()
+		return fmt.Sprintf("%f", x)
+	case TagDouble:
+		x, _ := n.GetDouble()
+		return fmt.Sprintf("%f", x)
+	case TagString:
+		x, _ := n.GetString()
+		return fmt.Sprintf("%s", x)
+	case TagByteArray, TagIntArray, TagLongArray, TagCompound:
+		return fmt.Sprintf("%v [%d elements]", n.Type, n.Length())
+	}
+}
+
+// PrintIndented pretty-prints the given NBT.
+func (n NBT) PrintIndented(w io.Writer) {
+	n.printIndented(w, n.Name, 0)
+}
+
+func (n NBT) printIndented(w io.Writer, name string, indent int) {
+	fmt.Fprintf(w, "%*s", indent*2, "")
+	if name != "" {
+		fmt.Fprintf(w, "%s: ", name)
+	}
+	defer fmt.Fprintln(w) // newline after this
+	switch n.Type {
+	default:
+		fmt.Fprintf(w, "[unknown tag %v]", n.Type)
+	case TagEnd:
+		fmt.Fprintf(w, "}")
+	case TagByte:
+		x, _ := n.GetByte()
+		fmt.Fprintf(w, "%q", x)
+	case TagShort:
+		x, _ := n.GetShort()
+		fmt.Fprintf(w, "%d", x)
+	case TagInt:
+		x, _ := n.GetInt()
+		fmt.Fprintf(w, "%d", x)
+	case TagLong:
+		x, _ := n.GetLong()
+		fmt.Fprintf(w, "%d", x)
+	case TagFloat:
+		x, _ := n.GetFloat()
+		fmt.Fprintf(w, "%f", x)
+	case TagDouble:
+		x, _ := n.GetDouble()
+		fmt.Fprintf(w, "%f", x)
+	case TagString:
+		x, _ := n.GetString()
+		fmt.Fprintf(w, "%s", x)
+	case TagByteArray, TagIntArray, TagLongArray:
+		fmt.Fprintf(w, "[%d item %v]", n.Length(), n.Type)
+	case TagList:
+		x, _ := n.GetList()
+		fmt.Fprintf(w, "[%d %v list]", n.Length(), x.typ)
+	case TagCompound:
+		x, _ := n.GetCompound()
+		fmt.Fprintf(w, "%v [%d elements] {\n", n.Type, n.Length())
+		for k, v := range x {
+			v.printIndented(w, k, indent+1)
+		}
+	}
+}
+
+func (n NBT) Length() int {
+	switch n.Type {
+	case TagByteArray:
+		return len(n.payload.(ByteArray))
+	case TagIntArray:
+		return len(n.payload.(IntArray))
+	case TagLongArray:
+		return len(n.payload.(LongArray))
+	case TagCompound:
+		return len(n.payload.(Compound))
+	case TagList:
+		x, ok := n.payload.(List)
+		if !ok {
+			fmt.Printf("TagList with nil payload [%s]", n.Name)
+			return 0
+		}
+		return len(x.data)
+	}
+	return 0
+}
 
 func (p End) store(w io.Writer) error {
 	return nil
@@ -263,14 +457,6 @@ func (p ByteArray) store(w io.Writer) error {
 	return err
 }
 
-/*
-func (p String) store(w io.Writer) error {
-}
-func (p List) store(w io.Writer) error {
-}
-
-*/
-
 func (p String) store(w io.Writer) error {
 	if len(p) > 32767 {
 		return fmt.Errorf("can't store %d-byte string", len(p))
@@ -282,6 +468,25 @@ func (p String) store(w io.Writer) error {
 	}
 	_, err = w.Write([]byte(p))
 	return err
+}
+
+func (p List) store(w io.Writer) error {
+	l := Int(len(p.data))
+	err := l.store(w)
+	if err != nil {
+		return err
+	}
+	for i := 0; i < int(l); i++ {
+		if p.data[i].Type != p.typ {
+			return fmt.Errorf("list mismatch, expecting %v, found %v", p.typ, p.data[i].Type)
+		}
+		// store just the payloads, not the whole objects
+		err = p.data[i].payload.store(w)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (p Compound) store(w io.Writer) error {
@@ -296,12 +501,35 @@ func (p Compound) store(w io.Writer) error {
 	return end.Store(w)
 }
 
-/*
 func (p IntArray) store(w io.Writer) error {
+	l := Int(len(p))
+	err := l.store(w)
+	if err != nil {
+		return err
+	}
+	for _, i := range p {
+		err = i.store(w)
+		if err != nil {
+			return err
+		}
+	}
+	return err
 }
+
 func (p LongArray) store(w io.Writer) error {
+	l := Int(len(p))
+	err := l.store(w)
+	if err != nil {
+		return err
+	}
+	for _, i := range p {
+		err = i.store(w)
+		if err != nil {
+			return err
+		}
+	}
+	return err
 }
-*/
 
 // LoadByte loads a Byte payload.
 func LoadByte(r io.Reader) (b Byte, e error) {
@@ -387,11 +615,46 @@ func LoadByteArray(r io.Reader) (b ByteArray, e error) {
 	}
 	buf := make([]byte, int(l))
 	n, err := r.Read(buf)
-	if err != nil && n != int(l) {
-		return *(*[]int8)(unsafe.Pointer(&buf)), err
+	// if you read exactly n, an EOF is harmless
+	if err == io.EOF && n == int(l) {
+		err = nil
 	}
 	// if you didn't read enough bytes, okay, fine, we'll just accept that
-	return *(*[]int8)(unsafe.Pointer(&buf)), nil
+	return *(*[]int8)(unsafe.Pointer(&buf)), err
+}
+
+// LoadIntArray loads an Int array, which has a leading Int indicating
+// how many Ints it contains.
+func LoadIntArray(r io.Reader) (ia IntArray, e error) {
+	l, err := LoadInt(r)
+	if err != nil {
+		return ia, err
+	}
+	buf := make([]Int, int(l))
+	for i := 0; i < int(l); i++ {
+		buf[i], e = LoadInt(r)
+		if e != nil {
+			return ia, e
+		}
+	}
+	return buf, nil
+}
+
+// LoadLongArray loads an Int array, which has a leading Int indicating
+// how many Long it contains.
+func LoadLongArray(r io.Reader) (ia LongArray, e error) {
+	l, err := LoadInt(r)
+	if err != nil {
+		return ia, err
+	}
+	buf := make([]Long, int(l))
+	for i := 0; i < int(l); i++ {
+		buf[i], e = LoadLong(r)
+		if e != nil {
+			return ia, e
+		}
+	}
+	return buf, nil
 }
 
 // LoadString loads a String payload, reading first a Short payload
