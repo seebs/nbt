@@ -2,7 +2,7 @@ package nbt
 
 import "strconv"
 
-const __name = "EndByteShortIntLongFloatDoubleByteArrayStringListCompoundIntArrayLongArray"
+const _Tag_name = "EndByteShortIntLongFloatDoubleByteArrayStringListCompoundIntArrayLongArray"
 
 var _Tag_index = [...]uint8{0, 3, 7, 12, 15, 19, 24, 30, 39, 45, 49, 57, 65, 74}
 
