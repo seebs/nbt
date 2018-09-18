@@ -49,6 +49,10 @@ func (n NBT) Store(w io.Writer) error {
 	if err != nil {
 		return err
 	}
+	_, err = w.Write([]byte(n.Name))
+	if err != nil {
+		return err
+	}
 	return n.payload.Store(w)
 }
 
@@ -68,6 +72,10 @@ func (n *NBT) Load(r io.Reader) error {
 	case TagByte:
 		var b Byte
 		n.payload, err = b.Load(r)
+		return err
+	case TagString:
+		var s String
+		n.payload, err = s.Load(r)
 		return err
 	default:
 		return fmt.Errorf("unsupported tag type %s", n.Type)
@@ -248,7 +256,7 @@ func (p String) Load(r io.Reader) (Payload, error) {
 	sh = l.(Short)
 	b := make([]byte, int(sh))
 	n, err := r.Read(b)
-	if err != nil {
+	if err != nil && n != int(sh) {
 		return nil, err
 	}
 	// if you didn't read enough bytes, okay, fine, we'll just accept that
@@ -302,9 +310,8 @@ func LoadUncompressed(r io.Reader) (NBT, error) {
 
 func Store(w io.Writer, n NBT) error {
 	comp := gzip.NewWriter(w)
-	err := StoreUncompressed(comp, n)
-	comp.Close()
-	return err
+	defer comp.Close()
+	return StoreUncompressed(comp, n)
 }
 
 func StoreUncompressed(w io.Writer, n NBT) error {
