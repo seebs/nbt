@@ -2,20 +2,34 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
+	"github.com/seebs/gogetopt"
 	"github.com/seebs/nbt"
 )
 
 func main() {
-	f, err := os.Open("/tmp/player.dat")
+	opts, files, err := gogetopt.GetOpt(os.Args[1:], "u")
 	if err != nil {
-		fmt.Printf("fatal: %s\n", err)
-		os.Exit(1)
+		log.Fatalf("invalid args: %s", err)
 	}
-	n, err := nbt.Load(f)
-	if err != nil {
-		fmt.Printf("fatal: %s\n", err)
-		os.Exit(1)
+	load := nbt.Load
+	if opts.Seen("u") {
+		load = nbt.LoadUncompressed
 	}
-	n.PrintIndented(os.Stdout)
+
+
+	for _, file := range(files) {
+		f, err := os.Open(file)
+		if err != nil {
+			fmt.Printf("open: fatal: %s\n", err)
+			os.Exit(1)
+		}
+		n, err := load(f)
+		if err != nil {
+			fmt.Printf("load: fatal: %s\n", err)
+			os.Exit(1)
+		}
+		n.PrintIndented(os.Stdout)
+	}
 }
