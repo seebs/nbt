@@ -13,8 +13,8 @@ import (
 // Tag represents the types of tags available.
 type Tag uint8
 
+// We define tags for the various NBT tag types.
 const (
-	// TagEnd and friends are the NBT tag forms.
 	TagEnd Tag = iota
 	TagByte
 	TagShort
@@ -201,7 +201,7 @@ func (n *NBT) Load(r io.Reader) error {
 		return err
 	}
 	n.Name = string(name)
-	fmt.Printf("load: %s [%v]\n", n.Name, n.Type)
+	// fmt.Printf("load: %s [%v]\n", n.Name, n.Type)
 	switch n.Type {
 	case TagByte:
 		n.payload, err = LoadByte(r)
@@ -487,8 +487,12 @@ func (p String) store(w io.Writer) error {
 }
 
 func (p List) store(w io.Writer) error {
+	err := Byte(p.typ).store(w)
+	if err != nil {
+		return err
+	}
 	l := Int(len(p.data))
-	err := l.store(w)
+	err = l.store(w)
 	if err != nil {
 		return err
 	}
@@ -571,7 +575,7 @@ func LoadShort(r io.Reader) (s Short, e error) {
 func LoadInt(r io.Reader) (i Int, e error) {
 	var buf [4]byte
 	n, err := r.Read(buf[0:4])
-	if n == 2 {
+	if n == 4 {
 		return Int(int32(buf[0])<<24 | int32(buf[1])<<16 | int32(buf[2])<<8 | int32(buf[3])), nil
 	}
 	return i, err
@@ -581,7 +585,7 @@ func LoadInt(r io.Reader) (i Int, e error) {
 func LoadLong(r io.Reader) (l Long, e error) {
 	var buf [8]byte
 	n, err := r.Read(buf[0:8])
-	if n == 2 {
+	if n == 8 {
 		return Long(
 			int64(buf[0])<<56 |
 				int64(buf[1])<<48 |
@@ -599,7 +603,7 @@ func LoadLong(r io.Reader) (l Long, e error) {
 func LoadFloat(r io.Reader) (f Float, e error) {
 	var buf [4]byte
 	n, err := r.Read(buf[0:4])
-	if n == 2 {
+	if n == 4 {
 		return Float(math.Float32frombits(uint32(buf[0])<<24 | uint32(buf[1])<<16 | uint32(buf[2])<<8 | uint32(buf[3]))), nil
 	}
 	return f, err
@@ -609,7 +613,7 @@ func LoadFloat(r io.Reader) (f Float, e error) {
 func LoadDouble(r io.Reader) (d Double, e error) {
 	var buf [8]byte
 	n, err := r.Read(buf[0:8])
-	if n == 2 {
+	if n == 8 {
 		return Double(math.Float64frombits(uint64(buf[0])<<56 |
 			uint64(buf[1])<<48 |
 			uint64(buf[2])<<40 |
@@ -691,30 +695,24 @@ func LoadString(r io.Reader) (s String, e error) {
 
 // LoadList loads a List tag.
 func LoadList(r io.Reader) (l List, e error) {
-	fmt.Printf("LoadList\n")
 	ttype, e := LoadByte(r)
 	if e != nil {
-		fmt.Printf("list: failed to load tag type: %s", e)
 		return l, e
 	}
 	if Tag(ttype) < TagEnd || Tag(ttype) >= TagMax {
-		fmt.Printf("invalid tag %v\n", Tag(ttype))
 		return l, fmt.Errorf("invalid tag type for list: %d", ttype)
 	}
 	count, e := LoadInt(r)
 	if e != nil {
-		fmt.Printf("list: failed to load count: %s", e)
 		return l, e
 	}
 	if count < 0 {
-		fmt.Printf("negative count\n")
 		return l, fmt.Errorf("invalid negative count for list: %d", count)
 	}
 	l.typ = Tag(ttype)
 	l.data = make([]Payload, count)
-	fmt.Printf("list: %v[%d]\n", l.typ, count)
+	// fmt.Printf("list: %v[%d]\n", l.typ, count)
 	for i := 0; i < int(count); i++ {
-		fmt.Printf("loading list member [%d]\n", i)
 		l.data[i], e = LoadPayload(l.typ, r)
 		if e != nil {
 			break
@@ -730,9 +728,8 @@ func LoadCompound(r io.Reader) (c Compound, e error) {
 	var n NBT
 	var err error
 	var errored error // an error we handle after the fact
-	fmt.Printf(">start compound\n")
 	for n, err = LoadUncompressed(r); err == nil && n.Type != TagEnd; n, err = LoadUncompressed(r) {
-		fmt.Printf("loaded tag: [%v] %s\n", n.Type, n.Name)
+		// fmt.Printf("loaded tag: [%v] %s\n", n.Type, n.Name)
 		_, ok := c[n.Name]
 		if ok {
 			// note the thing, but continue using the newer one
@@ -743,7 +740,6 @@ func LoadCompound(r io.Reader) (c Compound, e error) {
 	if n.Type != TagEnd {
 		return c, fmt.Errorf("unterminated compound tag")
 	}
-	fmt.Printf("<end compound [%d components]\n", len(c))
 	return c, errored
 }
 
