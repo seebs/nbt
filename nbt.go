@@ -28,6 +28,7 @@ const (
 	TagCompound
 	TagIntArray
 	TagLongArray
+	TagMax
 )
 
 // NBT represents a single named tag. There is an internal representation
@@ -200,6 +201,7 @@ func (n *NBT) Load(r io.Reader) error {
 		return err
 	}
 	n.Name = string(name)
+	fmt.Printf("load: %s [%v]\n", n.Name, n.Type)
 	switch n.Type {
 	case TagByte:
 		n.payload, err = LoadByte(r)
@@ -218,10 +220,13 @@ func (n *NBT) Load(r io.Reader) error {
 	case TagString:
 		n.payload, err = LoadString(r)
 	case TagList:
+		n.payload, err = LoadList(r)
 	case TagCompound:
 		n.payload, err = LoadCompound(r)
 	case TagIntArray:
+		n.payload, err = LoadIntArray(r)
 	case TagLongArray:
+		n.payload, err = LoadLongArray(r)
 	default:
 		err = fmt.Errorf("unsupported tag type %v", n.Type)
 	}
@@ -252,7 +257,7 @@ type ByteArray []int8
 type String string
 type List struct {
 	typ  Tag
-	data []NBT
+	data []Payload
 }
 type Compound map[string]NBT
 type IntArray []Int
@@ -302,6 +307,9 @@ func (n NBT) String() string {
 	case TagString:
 		x, _ := n.GetString()
 		return fmt.Sprintf("%s", x)
+	case TagList:
+		x, _ := n.GetList()
+		return fmt.Sprintf("list[%d elements] of %v", len(x.data), x.typ)
 	case TagByteArray, TagIntArray, TagLongArray, TagCompound:
 		return fmt.Sprintf("%v [%d elements]", n.Type, n.Length())
 	}
@@ -309,52 +317,60 @@ func (n NBT) String() string {
 
 // PrintIndented pretty-prints the given NBT.
 func (n NBT) PrintIndented(w io.Writer) {
-	n.printIndented(w, n.Name, 0)
+	printIndented(w, n.payload, n.Name, 0)
 }
 
-func (n NBT) printIndented(w io.Writer, name string, indent int) {
+func printIndented(w io.Writer, p Payload, prefix interface{}, indent int) {
 	fmt.Fprintf(w, "%*s", indent*2, "")
-	if name != "" {
-		fmt.Fprintf(w, "%s: ", name)
+	switch v := prefix.(type) {
+	case string:
+		fmt.Fprintf(w, "%s: ", v)
+	case int:
+		fmt.Fprintf(w, "[%d]: ", v)
+	default:
+		fmt.Fprintf(w, "%s: ", v)
 	}
 	defer fmt.Fprintln(w) // newline after this
-	switch n.Type {
+	switch x := p.(type) {
 	default:
-		fmt.Fprintf(w, "[unknown tag %v]", n.Type)
-	case TagEnd:
+		fmt.Fprintf(w, "[unknown tag %v]", p.Type())
+	case End:
 		fmt.Fprintf(w, "}")
-	case TagByte:
-		x, _ := n.GetByte()
+	case Byte:
 		fmt.Fprintf(w, "%q", x)
-	case TagShort:
-		x, _ := n.GetShort()
+	case Short:
 		fmt.Fprintf(w, "%d", x)
-	case TagInt:
-		x, _ := n.GetInt()
+	case Int:
 		fmt.Fprintf(w, "%d", x)
-	case TagLong:
-		x, _ := n.GetLong()
+	case Long:
 		fmt.Fprintf(w, "%d", x)
-	case TagFloat:
-		x, _ := n.GetFloat()
+	case Float:
 		fmt.Fprintf(w, "%f", x)
-	case TagDouble:
-		x, _ := n.GetDouble()
+	case Double:
 		fmt.Fprintf(w, "%f", x)
-	case TagString:
-		x, _ := n.GetString()
+	case String:
 		fmt.Fprintf(w, "%s", x)
-	case TagByteArray, TagIntArray, TagLongArray:
-		fmt.Fprintf(w, "[%d item %v]", n.Length(), n.Type)
-	case TagList:
-		x, _ := n.GetList()
-		fmt.Fprintf(w, "[%d %v list]", n.Length(), x.typ)
-	case TagCompound:
-		x, _ := n.GetCompound()
-		fmt.Fprintf(w, "%v [%d elements] {\n", n.Type, n.Length())
-		for k, v := range x {
-			v.printIndented(w, k, indent+1)
+	case ByteArray:
+		fmt.Fprintf(w, "[%d item byte]", len(x))
+	case IntArray:
+		fmt.Fprintf(w, "[%d item int]", len(x))
+	case LongArray:
+		fmt.Fprintf(w, "[%d item long]", len(x))
+	case List:
+		fmt.Fprintf(w, "[%d %v list] {", len(x.data), x.typ)
+		if len(x.data) == 0 {
+			fmt.Fprintf(w, "}")
+		} else {
+			for i, v := range x.data {
+				printIndented(w, v, i, indent+1)
+			}
 		}
+	case Compound:
+		fmt.Fprintf(w, "compound [%d elements] {\n", len(x))
+		for k, v := range x {
+			printIndented(w, v.payload, k, indent+1)
+		}
+		fmt.Fprintf(w, "%*s}\n", indent*2, "")
 	}
 }
 
@@ -477,11 +493,11 @@ func (p List) store(w io.Writer) error {
 		return err
 	}
 	for i := 0; i < int(l); i++ {
-		if p.data[i].Type != p.typ {
-			return fmt.Errorf("list mismatch, expecting %v, found %v", p.typ, p.data[i].Type)
+		if p.data[i].Type() != p.typ {
+			return fmt.Errorf("list mismatch, expecting %v, found %v", p.typ, p.data[i].Type())
 		}
 		// store just the payloads, not the whole objects
-		err = p.data[i].payload.store(w)
+		err = p.data[i].store(w)
 		if err != nil {
 			return err
 		}
@@ -673,23 +689,93 @@ func LoadString(r io.Reader) (s String, e error) {
 	return String(b[0:n]), nil
 }
 
+// LoadList loads a List tag.
+func LoadList(r io.Reader) (l List, e error) {
+	fmt.Printf("LoadList\n")
+	ttype, e := LoadByte(r)
+	if e != nil {
+		fmt.Printf("list: failed to load tag type: %s", e)
+		return l, e
+	}
+	if Tag(ttype) < TagEnd || Tag(ttype) >= TagMax {
+		fmt.Printf("invalid tag %v\n", Tag(ttype))
+		return l, fmt.Errorf("invalid tag type for list: %d", ttype)
+	}
+	count, e := LoadInt(r)
+	if e != nil {
+		fmt.Printf("list: failed to load count: %s", e)
+		return l, e
+	}
+	if count < 0 {
+		fmt.Printf("negative count\n")
+		return l, fmt.Errorf("invalid negative count for list: %d", count)
+	}
+	l.typ = Tag(ttype)
+	l.data = make([]Payload, count)
+	fmt.Printf("list: %v[%d]\n", l.typ, count)
+	for i := 0; i < int(count); i++ {
+		fmt.Printf("loading list member [%d]\n", i)
+		l.data[i], e = LoadPayload(l.typ, r)
+		if e != nil {
+			break
+		}
+	}
+	return l, e
+}
+
 // LoadCompound loads a Compound tag, thus, loads other tags until it gets
 // a TagEnd.
 func LoadCompound(r io.Reader) (c Compound, e error) {
 	c = make(map[string]NBT)
 	var n NBT
 	var err error
+	var errored error // an error we handle after the fact
+	fmt.Printf(">start compound\n")
 	for n, err = LoadUncompressed(r); err == nil && n.Type != TagEnd; n, err = LoadUncompressed(r) {
+		fmt.Printf("loaded tag: [%v] %s\n", n.Type, n.Name)
 		_, ok := c[n.Name]
 		if ok {
-			return c, fmt.Errorf("duplicate name '%s' in compound tag", n.Name)
+			// note the thing, but continue using the newer one
+			errored = fmt.Errorf("duplicate name '%s' in compound tag", n.Name)
 		}
 		c[n.Name] = n
 	}
 	if n.Type != TagEnd {
 		return c, fmt.Errorf("unterminated compound tag")
 	}
-	return c, nil
+	fmt.Printf("<end compound\n")
+	return c, errored
+}
+
+// LoadPayload wraps the type-specific payload loaders.
+func LoadPayload(typ Tag, r io.Reader) (p Payload, e error) {
+	switch typ {
+	case TagByte:
+		return LoadByte(r)
+	case TagShort:
+		return LoadShort(r)
+	case TagInt:
+		return LoadInt(r)
+	case TagLong:
+		return LoadLong(r)
+	case TagFloat:
+		return LoadFloat(r)
+	case TagDouble:
+		return LoadDouble(r)
+	case TagByteArray:
+		return LoadByteArray(r)
+	case TagString:
+		return LoadString(r)
+	case TagList:
+		return LoadList(r)
+	case TagCompound:
+		return LoadCompound(r)
+	case TagIntArray:
+		return LoadIntArray(r)
+	case TagLongArray:
+		return LoadLongArray(r)
+	}
+	return nil, fmt.Errorf("unhandled type %v", typ)
 }
 
 // Load reads the first NBT found in the gzipped stream r.
