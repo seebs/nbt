@@ -743,7 +743,7 @@ func LoadCompound(r io.Reader) (c Compound, e error) {
 	if n.Type != TagEnd {
 		return c, fmt.Errorf("unterminated compound tag")
 	}
-	fmt.Printf("<end compound\n")
+	fmt.Printf("<end compound [%d components]\n", len(c))
 	return c, errored
 }
 
