@@ -3,6 +3,7 @@
 package nbt
 
 import (
+	"bytes"
 	"compress/gzip"
 	"fmt"
 	"io"
@@ -199,7 +200,7 @@ func (n *NBT) Load(r io.Reader) error {
 		return err
 	}
 	n.Name = string(name)
-	fmt.Printf("load: %s [%v]\n", n.Name, n.Type)
+	// fmt.Printf("load: %s [%v]\n", n.Name, n.Type)
 	switch n.Type {
 	case TagByte:
 		n.payload, err = LoadByte(r)
@@ -231,7 +232,7 @@ func (n *NBT) Load(r io.Reader) error {
 	if err != nil {
 		fmt.Printf("failed to load %s: %s\n", n.Name, err)
 	} else {
-		fmt.Printf("load ok: %s\n", n.Name)
+		// fmt.Printf("load ok: %s\n", n.Name)
 	}
 	return err
 }
@@ -367,13 +368,13 @@ func printIndented(w io.Writer, p Payload, prefix interface{}, indent int) {
 				printIndented(w, v, i, indent+1)
 			}
 		}
-		fmt.Fprintf(w, "%*s}\n", indent*2, "")
+		fmt.Fprintf(w, "%*s}", indent*2, "")
 	case Compound:
 		fmt.Fprintf(w, "compound [%d elements] {\n", len(x))
 		for k, v := range x {
 			printIndented(w, v.payload, k, indent+1)
 		}
-		fmt.Fprintf(w, "%*s}\n", indent*2, "")
+		fmt.Fprintf(w, "%*s}", indent*2, "")
 	}
 }
 
@@ -711,9 +712,9 @@ func LoadList(r io.Reader) (l List, e error) {
 	}
 	l.typ = Tag(ttype)
 	l.data = make([]Payload, count)
-	fmt.Printf("list: %v[%d]\n", l.typ, count)
+	// fmt.Printf("list: %v[%d]\n", l.typ, count)
 	for i := 0; i < int(count); i++ {
-		fmt.Printf("item %d\n", i)
+		// fmt.Printf("item %d\n", i)
 		l.data[i], e = LoadPayload(l.typ, r)
 		if e != nil {
 			fmt.Printf("list failed at %d: %s\n", i, e)
@@ -731,7 +732,7 @@ func LoadCompound(r io.Reader) (c Compound, e error) {
 	var err error
 	var errored error // an error we handle after the fact
 	for n, err = LoadUncompressed(r); err == nil && n.Type != TagEnd; n, err = LoadUncompressed(r) {
-		fmt.Printf("loaded tag: [%v] %s\n", n.Type, n.Name)
+		// fmt.Printf("loaded tag: [%v] %s\n", n.Type, n.Name)
 		_, ok := c[n.Name]
 		if ok {
 			// note the thing, but continue using the newer one
@@ -778,7 +779,7 @@ func LoadPayload(typ Tag, r io.Reader) (p Payload, e error) {
 }
 
 // Load reads the first NBT found in the gzipped stream r.
-func Load(r io.Reader) (NBT, error) {
+func LoadCompressed(r io.Reader) (NBT, error) {
 	uncomp, err := gzip.NewReader(r)
 	if err != nil {
 		return NBT{}, err
@@ -800,12 +801,40 @@ func LoadUncompressed(r io.Reader) (NBT, error) {
 	return nbt, nbt.Load(r)
 }
 
-func Store(w io.Writer, n NBT) error {
+// Load attempts to determine whether the stream r is compressed or not,
+// and use LoadCompressed/LoadUncompressed accordingly.
+func Load(r io.Reader) (NBT, error) {
+	header := make([]byte, 512)
+	n, err := r.Read(header)
+	// couldn't read the thing
+	if err != nil && err != io.EOF {
+		return NBT{}, err
+	}
+	buf := bytes.NewBuffer(header[:n])
+	full := io.MultiReader(bytes.NewBuffer(header[:n]), r)
+	gz, err := gzip.NewReader(buf)
+	if err == nil {
+		gz.Close()
+		return LoadCompressed(full)
+	}
+	return LoadUncompressed(full)
+}
+
+// StoreCompressed writes n to w, compressed via gzip.
+func StoreCompressed(w io.Writer, n NBT) error {
 	comp := gzip.NewWriter(w)
 	defer comp.Close()
 	return StoreUncompressed(comp, n)
 }
 
+// StoreUncompressed writes n to w, not compressing it. This is not
+// usually useful except for debugging.
 func StoreUncompressed(w io.Writer, n NBT) error {
 	return n.Store(w)
+}
+
+// Store is just an alias for StoreCompressed, since the NBT spec
+// says everything is gzipped.
+func Store(w io.Writer, n NBT) error {
+	return StoreCompressed(w, n)
 }
