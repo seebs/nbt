@@ -39,8 +39,7 @@ type NBT struct {
 	payload Payload
 }
 
-// GetEnd returns the (useless) End value, plus a boolean indicating
-// whether the NBT in question was in fact a TagEnd.
+// GetEnd returns the (useless) End value.
 func (n NBT) GetEnd() (e End, ok bool) {
 	if n.Type != TagEnd {
 		return End{}, false
@@ -113,7 +112,7 @@ func (n NBT) GetFloat() (o Float, ok bool) {
 	return o, true
 }
 
-// GetLong returns the Double value.
+// GetDouble returns the Double value.
 func (n NBT) GetDouble() (o Double, ok bool) {
 	if n.Type != TagDouble {
 		return 0, false
@@ -126,8 +125,7 @@ func (n NBT) GetDouble() (o Double, ok bool) {
 	return o, true
 }
 
-// GetString returns the String value, plus a boolean indicating
-// whether the NBT in question was in fact a TagString.
+// GetString returns the String value.
 func (n NBT) GetString() (s String, ok bool) {
 	if n.Type != TagString {
 		return s, false
@@ -201,7 +199,7 @@ func (n *NBT) Load(r io.Reader) error {
 		return err
 	}
 	n.Name = string(name)
-	// fmt.Printf("load: %s [%v]\n", n.Name, n.Type)
+	fmt.Printf("load: %s [%v]\n", n.Name, n.Type)
 	switch n.Type {
 	case TagByte:
 		n.payload, err = LoadByte(r)
@@ -229,6 +227,11 @@ func (n *NBT) Load(r io.Reader) error {
 		n.payload, err = LoadLongArray(r)
 	default:
 		err = fmt.Errorf("unsupported tag type %v", n.Type)
+	}
+	if err != nil {
+		fmt.Printf("failed to load %s: %s\n", n.Name, err)
+	} else {
+		fmt.Printf("load ok: %s\n", n.Name)
 	}
 	return err
 }
@@ -358,13 +361,13 @@ func printIndented(w io.Writer, p Payload, prefix interface{}, indent int) {
 		fmt.Fprintf(w, "[%d item long]", len(x))
 	case List:
 		fmt.Fprintf(w, "[%d %v list] {", len(x.data), x.typ)
-		if len(x.data) == 0 {
-			fmt.Fprintf(w, "}")
-		} else {
+		if len(x.data) != 0 {
+			fmt.Fprintf(w, "\n")
 			for i, v := range x.data {
 				printIndented(w, v, i, indent+1)
 			}
 		}
+		fmt.Fprintf(w, "%*s}\n", indent*2, "")
 	case Compound:
 		fmt.Fprintf(w, "compound [%d elements] {\n", len(x))
 		for k, v := range x {
@@ -554,76 +557,76 @@ func (p LongArray) store(w io.Writer) error {
 // LoadByte loads a Byte payload.
 func LoadByte(r io.Reader) (b Byte, e error) {
 	var buf [1]byte
-	n, err := r.Read(buf[0:1])
-	if n == 1 {
-		return Byte(buf[0]), nil
+	_, err := io.ReadFull(r, buf[0:1])
+	if err != nil {
+		return b, err
 	}
-	return b, err
+	return Byte(buf[0]), nil
 }
 
 // LoadShort loads a Short payload.
 func LoadShort(r io.Reader) (s Short, e error) {
 	var buf [2]byte
-	n, err := r.Read(buf[0:2])
-	if n == 2 {
-		return Short(int16(buf[0])<<8 | int16(buf[1])), nil
+	_, err := io.ReadFull(r, buf[0:2])
+	if err != nil {
+		return s, err
 	}
-	return s, err
+	return Short(int16(buf[0])<<8 | int16(buf[1])), nil
 }
 
 // LoadInt loads an Int payload.
 func LoadInt(r io.Reader) (i Int, e error) {
 	var buf [4]byte
-	n, err := r.Read(buf[0:4])
-	if n == 4 {
-		return Int(int32(buf[0])<<24 | int32(buf[1])<<16 | int32(buf[2])<<8 | int32(buf[3])), nil
+	_, err := io.ReadFull(r, buf[0:4])
+	if err != nil {
+		return i, err
 	}
-	return i, err
+	return Int(int32(buf[0])<<24 | int32(buf[1])<<16 | int32(buf[2])<<8 | int32(buf[3])), nil
 }
 
 // LoadLong loads a Long payload.
 func LoadLong(r io.Reader) (l Long, e error) {
 	var buf [8]byte
-	n, err := r.Read(buf[0:8])
-	if n == 8 {
-		return Long(
-			int64(buf[0])<<56 |
-				int64(buf[1])<<48 |
-				int64(buf[2])<<40 |
-				int64(buf[3])<<32 |
-				int64(buf[4])<<24 |
-				int64(buf[5])<<16 |
-				int64(buf[6])<<8 |
-				int64(buf[7])<<0), nil
+	_, err := io.ReadFull(r, buf[0:8])
+	if err != nil {
+		return l, err
 	}
-	return l, err
+	return Long(
+		int64(buf[0])<<56 |
+			int64(buf[1])<<48 |
+			int64(buf[2])<<40 |
+			int64(buf[3])<<32 |
+			int64(buf[4])<<24 |
+			int64(buf[5])<<16 |
+			int64(buf[6])<<8 |
+			int64(buf[7])<<0), nil
 }
 
 // LoadFloat loads a Float payload.
 func LoadFloat(r io.Reader) (f Float, e error) {
 	var buf [4]byte
-	n, err := r.Read(buf[0:4])
-	if n == 4 {
-		return Float(math.Float32frombits(uint32(buf[0])<<24 | uint32(buf[1])<<16 | uint32(buf[2])<<8 | uint32(buf[3]))), nil
+	_, err := io.ReadFull(r, buf[0:4])
+	if err != nil {
+		return f, err
 	}
-	return f, err
+	return Float(math.Float32frombits(uint32(buf[0])<<24 | uint32(buf[1])<<16 | uint32(buf[2])<<8 | uint32(buf[3]))), nil
 }
 
 // LoadDouble loads a Double payload.
 func LoadDouble(r io.Reader) (d Double, e error) {
 	var buf [8]byte
-	n, err := r.Read(buf[0:8])
-	if n == 8 {
-		return Double(math.Float64frombits(uint64(buf[0])<<56 |
-			uint64(buf[1])<<48 |
-			uint64(buf[2])<<40 |
-			uint64(buf[3])<<32 |
-			uint64(buf[4])<<24 |
-			uint64(buf[5])<<16 |
-			uint64(buf[6])<<8 |
-			uint64(buf[7])<<0)), nil
+	_, err := io.ReadFull(r, buf[0:8])
+	if err != nil {
+		return d, err
 	}
-	return d, err
+	return Double(math.Float64frombits(uint64(buf[0])<<56 |
+		uint64(buf[1])<<48 |
+		uint64(buf[2])<<40 |
+		uint64(buf[3])<<32 |
+		uint64(buf[4])<<24 |
+		uint64(buf[5])<<16 |
+		uint64(buf[6])<<8 |
+		uint64(buf[7])<<0)), nil
 }
 
 // LoadByteArray loads a byte array, which has a leading Int indicating
@@ -634,12 +637,10 @@ func LoadByteArray(r io.Reader) (b ByteArray, e error) {
 		return b, err
 	}
 	buf := make([]byte, int(l))
-	n, err := r.Read(buf)
-	// if you read exactly n, an EOF is harmless
-	if err == io.EOF && n == int(l) {
-		err = nil
+	_, err = io.ReadFull(r, buf)
+	if err != nil {
+		return b, err
 	}
-	// if you didn't read enough bytes, okay, fine, we'll just accept that
 	return *(*[]int8)(unsafe.Pointer(&buf)), err
 }
 
@@ -680,17 +681,16 @@ func LoadLongArray(r io.Reader) (ia LongArray, e error) {
 // LoadString loads a String payload, reading first a Short payload
 // for the string's length, then that many bytes of string data.
 func LoadString(r io.Reader) (s String, e error) {
-	l, err := LoadShort(r)
+	sl, err := LoadShort(r)
 	if err != nil {
 		return s, err
 	}
-	b := make([]byte, int(l))
-	n, err := r.Read(b)
-	if err != nil && n != int(l) {
+	buf := make([]byte, sl)
+	_, err = io.ReadFull(r, buf)
+	if err != nil {
 		return s, err
 	}
-	// if you didn't read enough bytes, okay, fine, we'll just accept that
-	return String(b[0:n]), nil
+	return String(buf), nil
 }
 
 // LoadList loads a List tag.
@@ -711,10 +711,12 @@ func LoadList(r io.Reader) (l List, e error) {
 	}
 	l.typ = Tag(ttype)
 	l.data = make([]Payload, count)
-	// fmt.Printf("list: %v[%d]\n", l.typ, count)
+	fmt.Printf("list: %v[%d]\n", l.typ, count)
 	for i := 0; i < int(count); i++ {
+		fmt.Printf("item %d\n", i)
 		l.data[i], e = LoadPayload(l.typ, r)
 		if e != nil {
+			fmt.Printf("list failed at %d: %s\n", i, e)
 			break
 		}
 	}
@@ -729,7 +731,7 @@ func LoadCompound(r io.Reader) (c Compound, e error) {
 	var err error
 	var errored error // an error we handle after the fact
 	for n, err = LoadUncompressed(r); err == nil && n.Type != TagEnd; n, err = LoadUncompressed(r) {
-		// fmt.Printf("loaded tag: [%v] %s\n", n.Type, n.Name)
+		fmt.Printf("loaded tag: [%v] %s\n", n.Type, n.Name)
 		_, ok := c[n.Name]
 		if ok {
 			// note the thing, but continue using the newer one
@@ -738,6 +740,7 @@ func LoadCompound(r io.Reader) (c Compound, e error) {
 		c[n.Name] = n
 	}
 	if n.Type != TagEnd {
+		fmt.Printf("failed load compound\n")
 		return c, fmt.Errorf("unterminated compound tag")
 	}
 	return c, errored
@@ -788,12 +791,9 @@ func Load(r io.Reader) (NBT, error) {
 // stream r.
 func LoadUncompressed(r io.Reader) (NBT, error) {
 	var tagByte [1]byte
-	n, err := r.Read(tagByte[0:1])
+	_, err := io.ReadFull(r, tagByte[0:1])
 	if err != nil {
 		return NBT{}, err
-	}
-	if n != 1 {
-		panic("no byte read on a non-error read, this shouldn't happen")
 	}
 	tag := Tag(tagByte[0])
 	nbt := NBT{Type: tag}
