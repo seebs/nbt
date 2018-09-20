@@ -3,6 +3,7 @@
 package nbt
 
 import (
+	"bufio"
 	"bytes"
 	"compress/gzip"
 	"fmt"
@@ -804,20 +805,19 @@ func LoadUncompressed(r io.Reader) (NBT, error) {
 // Load attempts to determine whether the stream r is compressed or not,
 // and use LoadCompressed/LoadUncompressed accordingly.
 func Load(r io.Reader) (NBT, error) {
-	header := make([]byte, 512)
-	n, err := r.Read(header)
+	buf := bufio.NewReader(r)
+	header, err := buf.Peek(512)
 	// couldn't read the thing
 	if err != nil && err != io.EOF {
 		return NBT{}, err
 	}
-	buf := bytes.NewBuffer(header[:n])
-	full := io.MultiReader(bytes.NewBuffer(header[:n]), r)
-	gz, err := gzip.NewReader(buf)
+	readBuf := bytes.NewBuffer(header)
+	gz, err := gzip.NewReader(readBuf)
 	if err == nil {
 		gz.Close()
-		return LoadCompressed(full)
+		return LoadCompressed(buf)
 	}
-	return LoadUncompressed(full)
+	return LoadUncompressed(buf)
 }
 
 // StoreCompressed writes n to w, compressed via gzip.
