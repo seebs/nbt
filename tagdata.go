@@ -43,7 +43,7 @@ func (l List) GetByteList() (out []Byte, ok bool) {
 	if l.typ != TagByte {
 		return out, false
 	}
-	out, ok = l.rawData.([]Byte)
+	out, ok = l.data.([]Byte)
 	return out, ok
 }
 
@@ -73,7 +73,7 @@ func (l List) GetShortList() (out []Short, ok bool) {
 	if l.typ != TagShort {
 		return out, false
 	}
-	out, ok = l.rawData.([]Short)
+	out, ok = l.data.([]Short)
 	return out, ok
 }
 
@@ -103,7 +103,7 @@ func (l List) GetIntList() (out []Int, ok bool) {
 	if l.typ != TagInt {
 		return out, false
 	}
-	out, ok = l.rawData.([]Int)
+	out, ok = l.data.([]Int)
 	return out, ok
 }
 
@@ -133,7 +133,7 @@ func (l List) GetLongList() (out []Long, ok bool) {
 	if l.typ != TagLong {
 		return out, false
 	}
-	out, ok = l.rawData.([]Long)
+	out, ok = l.data.([]Long)
 	return out, ok
 }
 
@@ -163,7 +163,7 @@ func (l List) GetFloatList() (out []Float, ok bool) {
 	if l.typ != TagFloat {
 		return out, false
 	}
-	out, ok = l.rawData.([]Float)
+	out, ok = l.data.([]Float)
 	return out, ok
 }
 
@@ -193,7 +193,7 @@ func (l List) GetDoubleList() (out []Double, ok bool) {
 	if l.typ != TagDouble {
 		return out, false
 	}
-	out, ok = l.rawData.([]Double)
+	out, ok = l.data.([]Double)
 	return out, ok
 }
 
@@ -223,7 +223,7 @@ func (l List) GetByteArrayList() (out []ByteArray, ok bool) {
 	if l.typ != TagByteArray {
 		return out, false
 	}
-	out, ok = l.rawData.([]ByteArray)
+	out, ok = l.data.([]ByteArray)
 	return out, ok
 }
 
@@ -253,7 +253,7 @@ func (l List) GetStringList() (out []String, ok bool) {
 	if l.typ != TagString {
 		return out, false
 	}
-	out, ok = l.rawData.([]String)
+	out, ok = l.data.([]String)
 	return out, ok
 }
 
@@ -283,7 +283,7 @@ func (l List) GetListList() (out []List, ok bool) {
 	if l.typ != TagList {
 		return out, false
 	}
-	out, ok = l.rawData.([]List)
+	out, ok = l.data.([]List)
 	return out, ok
 }
 
@@ -313,7 +313,7 @@ func (l List) GetCompoundList() (out []Compound, ok bool) {
 	if l.typ != TagCompound {
 		return out, false
 	}
-	out, ok = l.rawData.([]Compound)
+	out, ok = l.data.([]Compound)
 	return out, ok
 }
 
@@ -343,7 +343,7 @@ func (l List) GetIntArrayList() (out []IntArray, ok bool) {
 	if l.typ != TagIntArray {
 		return out, false
 	}
-	out, ok = l.rawData.([]IntArray)
+	out, ok = l.data.([]IntArray)
 	return out, ok
 }
 
@@ -373,7 +373,7 @@ func (l List) GetLongArrayList() (out []LongArray, ok bool) {
 	if l.typ != TagLongArray {
 		return out, false
 	}
-	out, ok = l.rawData.([]LongArray)
+	out, ok = l.data.([]LongArray)
 	return out, ok
 }
 
@@ -381,14 +381,13 @@ func (l List) GetLongArrayList() (out []LongArray, ok bool) {
 
 
 func (l List) storeData(w io.Writer) (err error) {
-	// interface slice and raw data slice are the same length
-	count := len(l.data)
-	switch raw := l.rawData.(type) {
+	switch raw := l.data.(type) {
 
 	case []End: // no data to store
 		return nil
 
 	case []Byte:
+		count := len(raw)
 		for i := 0; i < count; i++ {
 			err = raw[i].store(w)
 			if err != nil {
@@ -397,6 +396,7 @@ func (l List) storeData(w io.Writer) (err error) {
 		}
 
 	case []Short:
+		count := len(raw)
 		for i := 0; i < count; i++ {
 			err = raw[i].store(w)
 			if err != nil {
@@ -405,6 +405,7 @@ func (l List) storeData(w io.Writer) (err error) {
 		}
 
 	case []Int:
+		count := len(raw)
 		for i := 0; i < count; i++ {
 			err = raw[i].store(w)
 			if err != nil {
@@ -413,6 +414,7 @@ func (l List) storeData(w io.Writer) (err error) {
 		}
 
 	case []Long:
+		count := len(raw)
 		for i := 0; i < count; i++ {
 			err = raw[i].store(w)
 			if err != nil {
@@ -421,6 +423,7 @@ func (l List) storeData(w io.Writer) (err error) {
 		}
 
 	case []Float:
+		count := len(raw)
 		for i := 0; i < count; i++ {
 			err = raw[i].store(w)
 			if err != nil {
@@ -429,6 +432,7 @@ func (l List) storeData(w io.Writer) (err error) {
 		}
 
 	case []Double:
+		count := len(raw)
 		for i := 0; i < count; i++ {
 			err = raw[i].store(w)
 			if err != nil {
@@ -437,6 +441,7 @@ func (l List) storeData(w io.Writer) (err error) {
 		}
 
 	case []ByteArray:
+		count := len(raw)
 		for i := 0; i < count; i++ {
 			err = raw[i].store(w)
 			if err != nil {
@@ -445,6 +450,7 @@ func (l List) storeData(w io.Writer) (err error) {
 		}
 
 	case []String:
+		count := len(raw)
 		for i := 0; i < count; i++ {
 			err = raw[i].store(w)
 			if err != nil {
@@ -453,6 +459,7 @@ func (l List) storeData(w io.Writer) (err error) {
 		}
 
 	case []List:
+		count := len(raw)
 		for i := 0; i < count; i++ {
 			err = raw[i].store(w)
 			if err != nil {
@@ -461,6 +468,7 @@ func (l List) storeData(w io.Writer) (err error) {
 		}
 
 	case []Compound:
+		count := len(raw)
 		for i := 0; i < count; i++ {
 			err = raw[i].store(w)
 			if err != nil {
@@ -469,6 +477,7 @@ func (l List) storeData(w io.Writer) (err error) {
 		}
 
 	case []IntArray:
+		count := len(raw)
 		for i := 0; i < count; i++ {
 			err = raw[i].store(w)
 			if err != nil {
@@ -477,6 +486,7 @@ func (l List) storeData(w io.Writer) (err error) {
 		}
 
 	case []LongArray:
+		count := len(raw)
 		for i := 0; i < count; i++ {
 			err = raw[i].store(w)
 			if err != nil {
@@ -497,7 +507,6 @@ func (l List) loadData(r io.Reader, count int) (err error) {
 
 	case TagEnd: // nothing to load
 		l.data = nil
-		l.rawData = nil
 		return nil
 
 	case TagByte:
@@ -509,12 +518,7 @@ func (l List) loadData(r io.Reader, count int) (err error) {
 				break
 			}
 		}
-		l.rawData = raw
-		// wrap the raw data in Payload interfaces for later convenience
-		l.data = make([]Payload, len(raw))
-		for i, r := range raw {
-			l.data[i] = r
-		}
+		l.data = raw
 		return err
 
 	case TagShort:
@@ -526,12 +530,7 @@ func (l List) loadData(r io.Reader, count int) (err error) {
 				break
 			}
 		}
-		l.rawData = raw
-		// wrap the raw data in Payload interfaces for later convenience
-		l.data = make([]Payload, len(raw))
-		for i, r := range raw {
-			l.data[i] = r
-		}
+		l.data = raw
 		return err
 
 	case TagInt:
@@ -543,12 +542,7 @@ func (l List) loadData(r io.Reader, count int) (err error) {
 				break
 			}
 		}
-		l.rawData = raw
-		// wrap the raw data in Payload interfaces for later convenience
-		l.data = make([]Payload, len(raw))
-		for i, r := range raw {
-			l.data[i] = r
-		}
+		l.data = raw
 		return err
 
 	case TagLong:
@@ -560,12 +554,7 @@ func (l List) loadData(r io.Reader, count int) (err error) {
 				break
 			}
 		}
-		l.rawData = raw
-		// wrap the raw data in Payload interfaces for later convenience
-		l.data = make([]Payload, len(raw))
-		for i, r := range raw {
-			l.data[i] = r
-		}
+		l.data = raw
 		return err
 
 	case TagFloat:
@@ -577,12 +566,7 @@ func (l List) loadData(r io.Reader, count int) (err error) {
 				break
 			}
 		}
-		l.rawData = raw
-		// wrap the raw data in Payload interfaces for later convenience
-		l.data = make([]Payload, len(raw))
-		for i, r := range raw {
-			l.data[i] = r
-		}
+		l.data = raw
 		return err
 
 	case TagDouble:
@@ -594,12 +578,7 @@ func (l List) loadData(r io.Reader, count int) (err error) {
 				break
 			}
 		}
-		l.rawData = raw
-		// wrap the raw data in Payload interfaces for later convenience
-		l.data = make([]Payload, len(raw))
-		for i, r := range raw {
-			l.data[i] = r
-		}
+		l.data = raw
 		return err
 
 	case TagByteArray:
@@ -611,12 +590,7 @@ func (l List) loadData(r io.Reader, count int) (err error) {
 				break
 			}
 		}
-		l.rawData = raw
-		// wrap the raw data in Payload interfaces for later convenience
-		l.data = make([]Payload, len(raw))
-		for i, r := range raw {
-			l.data[i] = r
-		}
+		l.data = raw
 		return err
 
 	case TagString:
@@ -628,12 +602,7 @@ func (l List) loadData(r io.Reader, count int) (err error) {
 				break
 			}
 		}
-		l.rawData = raw
-		// wrap the raw data in Payload interfaces for later convenience
-		l.data = make([]Payload, len(raw))
-		for i, r := range raw {
-			l.data[i] = r
-		}
+		l.data = raw
 		return err
 
 	case TagList:
@@ -645,12 +614,7 @@ func (l List) loadData(r io.Reader, count int) (err error) {
 				break
 			}
 		}
-		l.rawData = raw
-		// wrap the raw data in Payload interfaces for later convenience
-		l.data = make([]Payload, len(raw))
-		for i, r := range raw {
-			l.data[i] = r
-		}
+		l.data = raw
 		return err
 
 	case TagCompound:
@@ -662,12 +626,7 @@ func (l List) loadData(r io.Reader, count int) (err error) {
 				break
 			}
 		}
-		l.rawData = raw
-		// wrap the raw data in Payload interfaces for later convenience
-		l.data = make([]Payload, len(raw))
-		for i, r := range raw {
-			l.data[i] = r
-		}
+		l.data = raw
 		return err
 
 	case TagIntArray:
@@ -679,12 +638,7 @@ func (l List) loadData(r io.Reader, count int) (err error) {
 				break
 			}
 		}
-		l.rawData = raw
-		// wrap the raw data in Payload interfaces for later convenience
-		l.data = make([]Payload, len(raw))
-		for i, r := range raw {
-			l.data[i] = r
-		}
+		l.data = raw
 		return err
 
 	case TagLongArray:
@@ -696,15 +650,201 @@ func (l List) loadData(r io.Reader, count int) (err error) {
 				break
 			}
 		}
-		l.rawData = raw
-		// wrap the raw data in Payload interfaces for later convenience
-		l.data = make([]Payload, len(raw))
-		for i, r := range raw {
-			l.data[i] = r
-		}
+		l.data = raw
 		return err
 
 	default:
 		return fmt.Errorf("unhandled tag type in List.loadData: %v", l.typ)
+	}
+}
+
+// Iterate iterates over the list, passing each item in the list (as a Payload)
+// to the given function. If fn returns a non-nil error, Iterate stops and returns
+// the error.
+func (l List) Iterate(fn func(int, Payload) error) (err error) {
+	switch raw := l.data.(type) {
+
+	case []End:
+		count := len(raw)
+		for i := 0; i < count; i++ {
+
+			err = fn(i, End{})
+			if err != nil {
+				break
+			}
+		}
+	case []Byte:
+		count := len(raw)
+		for i := 0; i < count; i++ {
+err = fn(i, raw[i])
+
+			if err != nil {
+				break
+			}
+		}
+	case []Short:
+		count := len(raw)
+		for i := 0; i < count; i++ {
+err = fn(i, raw[i])
+
+			if err != nil {
+				break
+			}
+		}
+	case []Int:
+		count := len(raw)
+		for i := 0; i < count; i++ {
+err = fn(i, raw[i])
+
+			if err != nil {
+				break
+			}
+		}
+	case []Long:
+		count := len(raw)
+		for i := 0; i < count; i++ {
+err = fn(i, raw[i])
+
+			if err != nil {
+				break
+			}
+		}
+	case []Float:
+		count := len(raw)
+		for i := 0; i < count; i++ {
+err = fn(i, raw[i])
+
+			if err != nil {
+				break
+			}
+		}
+	case []Double:
+		count := len(raw)
+		for i := 0; i < count; i++ {
+err = fn(i, raw[i])
+
+			if err != nil {
+				break
+			}
+		}
+	case []ByteArray:
+		count := len(raw)
+		for i := 0; i < count; i++ {
+err = fn(i, raw[i])
+
+			if err != nil {
+				break
+			}
+		}
+	case []String:
+		count := len(raw)
+		for i := 0; i < count; i++ {
+err = fn(i, raw[i])
+
+			if err != nil {
+				break
+			}
+		}
+	case []List:
+		count := len(raw)
+		for i := 0; i < count; i++ {
+err = fn(i, raw[i])
+
+			if err != nil {
+				break
+			}
+		}
+	case []Compound:
+		count := len(raw)
+		for i := 0; i < count; i++ {
+err = fn(i, raw[i])
+
+			if err != nil {
+				break
+			}
+		}
+	case []IntArray:
+		count := len(raw)
+		for i := 0; i < count; i++ {
+err = fn(i, raw[i])
+
+			if err != nil {
+				break
+			}
+		}
+	case []LongArray:
+		count := len(raw)
+		for i := 0; i < count; i++ {
+err = fn(i, raw[i])
+
+			if err != nil {
+				break
+			}
+		}
+	default:
+		return fmt.Errorf("unhandled tag type in List.Iterate: %v", l.typ)
+	}
+	return err
+}
+
+// Length returns the length of the list, if applicable. Note, a list of End
+// is (I think) always of length 0, if it's even valid at all.
+func (l List) Length() int {
+	switch raw := l.data.(type) {
+
+	case []End:
+
+		return 0
+
+	case []Byte:
+
+		return len(raw)
+
+	case []Short:
+
+		return len(raw)
+
+	case []Int:
+
+		return len(raw)
+
+	case []Long:
+
+		return len(raw)
+
+	case []Float:
+
+		return len(raw)
+
+	case []Double:
+
+		return len(raw)
+
+	case []ByteArray:
+
+		return len(raw)
+
+	case []String:
+
+		return len(raw)
+
+	case []List:
+
+		return len(raw)
+
+	case []Compound:
+
+		return len(raw)
+
+	case []IntArray:
+
+		return len(raw)
+
+	case []LongArray:
+
+		return len(raw)
+
+	default:
+	 	return 0
 	}
 }

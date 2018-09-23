@@ -195,38 +195,7 @@ func LoadCompound(r io.Reader) (c Compound, e error) {
 	return c, errored
 }
 
-// LoadPayload wraps the type-specific payload loaders.
-func LoadPayload(typ Tag, r io.Reader) (p Payload, e error) {
-	switch typ {
-	case TagByte:
-		return LoadByte(r)
-	case TagShort:
-		return LoadShort(r)
-	case TagInt:
-		return LoadInt(r)
-	case TagLong:
-		return LoadLong(r)
-	case TagFloat:
-		return LoadFloat(r)
-	case TagDouble:
-		return LoadDouble(r)
-	case TagByteArray:
-		return LoadByteArray(r)
-	case TagString:
-		return LoadString(r)
-	case TagList:
-		return LoadList(r)
-	case TagCompound:
-		return LoadCompound(r)
-	case TagIntArray:
-		return LoadIntArray(r)
-	case TagLongArray:
-		return LoadLongArray(r)
-	}
-	return nil, fmt.Errorf("unhandled type %v", typ)
-}
-
-// Load reads the first NBT found in the gzipped stream r.
+// LoadCompressed reads the first NBT found in the gzipped stream r.
 func LoadCompressed(r io.Reader) (NBT, error) {
 	uncomp, err := gzip.NewReader(r)
 	if err != nil {

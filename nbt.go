@@ -61,14 +61,11 @@ type Double float64
 type ByteArray []int8
 type String string
 
-// List is a pain to work with. To avoid massive duplication in allocation,
-// the slice of payload interfaces are boxing a slice of the underlying
-// type. Since those slices have no type in common, we use interface{} for
-// them.
+// List is a pain to work with; see tag.tmp for the template code, and
+// tagdata.go for the fancy implementations with type switches.
 type List struct {
-	typ     Tag
-	data    []Payload
-	rawData interface{}
+	typ  Tag
+	data interface{}
 }
 type Compound map[string]NBT
 type IntArray []Int
@@ -107,7 +104,7 @@ func (n NBT) String() string {
 		return fmt.Sprintf("%s", x)
 	case TagList:
 		x, _ := n.GetList()
-		return fmt.Sprintf("list[%d elements] of %v", len(x.data), x.typ)
+		return fmt.Sprintf("list[%d elements] of %v", x.Length(), x.typ)
 	case TagByteArray, TagIntArray, TagLongArray, TagCompound:
 		return fmt.Sprintf("%v [%d elements]", n.Type, n.Length())
 	}
@@ -155,12 +152,11 @@ func printIndented(w io.Writer, p Payload, prefix interface{}, indent int) {
 	case LongArray:
 		fmt.Fprintf(w, "[%d item long]", len(x))
 	case List:
-		fmt.Fprintf(w, "[%d %v list] {", len(x.data), x.typ)
-		if len(x.data) != 0 {
+		length := x.Length()
+		fmt.Fprintf(w, "[%d %v list] {", length, x.typ)
+		if length != 0 {
 			fmt.Fprintf(w, "\n")
-			for i, v := range x.data {
-				printIndented(w, v, i, indent+1)
-			}
+			x.Iterate(func(i int, p Payload) error { printIndented(w, p, i, indent+1); return nil })
 		}
 		fmt.Fprintf(w, "%*s}", indent*2, "")
 	case Compound:
@@ -188,7 +184,7 @@ func (n NBT) Length() int {
 			fmt.Printf("TagList with nil payload [%s]", n.Name)
 			return 0
 		}
-		return len(x.data)
+		return x.Length()
 	}
 	return 0
 }

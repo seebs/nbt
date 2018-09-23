@@ -34,7 +34,7 @@ func (l List) Get{{.}}List() (out []{{.}}, ok bool) {
 	if l.typ != Tag{{.}} {
 		return out, false
 	}
-	out, ok = l.rawData.([]{{.}})
+	out, ok = l.data.([]{{.}})
 	return out, ok
 }
 
@@ -49,12 +49,11 @@ func (n NBT) GetEnd() (out End, ok bool) {
 {{end}}
 
 func (l List) storeData(w io.Writer) (err error) {
-	// interface slice and raw data slice are the same length
-	count := len(l.data)
-	switch raw := l.rawData.(type) {
+	switch raw := l.data.(type) {
 {{range . -}}
 {{if ne . "End"}}
 	case []{{.}}:
+		count := len(raw)
 		for i := 0; i < count; i++ {
 			err = raw[i].store(w)
 			if err != nil {
@@ -87,21 +86,57 @@ func (l List) loadData(r io.Reader, count int) (err error) {
 				break
 			}
 		}
-		l.rawData = raw
-		// wrap the raw data in Payload interfaces for later convenience
-		l.data = make([]Payload, len(raw))
-		for i, r := range raw {
-			l.data[i] = r
-		}
+		l.data = raw
 		return err
 {{else}}
 	case TagEnd: // nothing to load
 		l.data = nil
-		l.rawData = nil
 		return nil
 {{end}}
 {{- end}}
 	default:
 		return fmt.Errorf("unhandled tag type in List.loadData: %v", l.typ)
+	}
+}
+
+// Iterate iterates over the list, passing each item in the list (as a Payload)
+// to the given function. If fn returns a non-nil error, Iterate stops and returns
+// the error.
+func (l List) Iterate(fn func(int, Payload) error) (err error) {
+	switch raw := l.data.(type) {
+{{range .}}
+	case []{{.}}:
+		count := len(raw)
+		for i := 0; i < count; i++ {
+{{if ne . "End" -}}
+			err = fn(i, raw[i])
+{{else}}
+			err = fn(i, End{})
+{{- end}}
+			if err != nil {
+				break
+			}
+		}
+{{- end}}
+	default:
+		return fmt.Errorf("unhandled tag type in List.Iterate: %v", l.typ)
+	}
+	return err
+}
+
+// Length returns the length of the list, if applicable. Note, a list of End
+// is (I think) always of length 0, if it's even valid at all.
+func (l List) Length() int {
+	switch raw := l.data.(type) {
+{{range .}}
+	case []{{.}}:
+{{ if ne . "End" }}
+		return len(raw)
+{{else}}
+		return 0
+{{end}}
+{{- end}}
+	default:
+	 	return 0
 	}
 }

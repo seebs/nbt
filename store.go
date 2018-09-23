@@ -130,7 +130,7 @@ func (p List) store(w io.Writer) error {
 	if err != nil {
 		return err
 	}
-	l := Int(len(p.data))
+	l := Int(p.Length())
 	err = l.store(w)
 	if err != nil {
 		return err
