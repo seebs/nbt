@@ -2,51 +2,51 @@
 // NBT data format.
 package nbt
 
-//go:generate go run taggen/main.go -in tag.tmp -out tagdata.go End Byte Short Int Long Float Double ByteArray String List Compound IntArray LongArray
+//go:generate go run typegen/main.go -in type.tmp -out typegen.go End Byte Short Int Long Float Double ByteArray String List Compound IntArray LongArray
 
 import (
 	"fmt"
 	"io"
 )
 
-// Tag represents the types of tags available.
-type Tag uint8
+// Type represents the types of tags available.
+type Type uint8
 
 // We define tags for the various NBT tag types.
 const (
-	TagEnd Tag = iota
-	TagByte
-	TagShort
-	TagInt
-	TagLong
-	TagFloat
-	TagDouble
-	TagByteArray
-	TagString
-	TagList
-	TagCompound
-	TagIntArray
-	TagLongArray
-	TagMax
+	TypeEnd Type = iota
+	TypeByte
+	TypeShort
+	TypeInt
+	TypeLong
+	TypeFloat
+	TypeDouble
+	TypeByteArray
+	TypeString
+	TypeList
+	TypeCompound
+	TypeIntArray
+	TypeLongArray
+	TypeMax
 )
 
 // NBT represents a single named tag. There is an internal representation
 // of contents; use the Get*() methods to obtain contents.
 type NBT struct {
 	Name    string
-	Type    Tag
+	Type    Type
 	payload Payload
 }
 
 // A Payload represents the payload associated with a named tag.
 type Payload interface {
-	Type() Tag
+	Type() Type
 	store(w io.Writer) error
 }
 
-// NBTNamed takes a payload (such as a Compound, or String) and
+// Named takes a payload (such as a Compound, or String) and
 // wraps it into an NBT object with the given name.
-func NBTNamed(name string, payload Payload) NBT {
+func Named(name string, payload Payload) NBT {
 	return NBT{Type: payload.Type(), Name: name, payload: payload}
 }
 
@@ -62,10 +62,11 @@ type ByteArray []int8
 type String string
 
 // List is a pain to work with; see tag.tmp for the template code, and
-// tagdata.go for the fancy implementations with type switches.
+// typegen.go for the fancy generated-code implementations with type
+// switches.
 type List struct {
-	typ  Tag
-	data interface{}
+	Contents Type
+	data     interface{}
 }
 type Compound map[string]NBT
 type IntArray []Int
@@ -79,33 +80,33 @@ func (n NBT) String() string {
 	switch n.Type {
 	default:
 		return fmt.Sprintf("[unknown tag %v]", n.Type)
-	case TagEnd:
+	case TypeEnd:
 		return ""
-	case TagByte:
+	case TypeByte:
 		x, _ := n.GetByte()
 		return fmt.Sprintf("%q", x)
-	case TagShort:
+	case TypeShort:
 		x, _ := n.GetShort()
 		return fmt.Sprintf("%d", x)
-	case TagInt:
+	case TypeInt:
 		x, _ := n.GetInt()
 		return fmt.Sprintf("%d", x)
-	case TagLong:
+	case TypeLong:
 		x, _ := n.GetLong()
 		return fmt.Sprintf("%d", x)
-	case TagFloat:
+	case TypeFloat:
 		x, _ := n.GetFloat()
 		return fmt.Sprintf("%f", x)
-	case TagDouble:
+	case TypeDouble:
 		x, _ := n.GetDouble()
 		return fmt.Sprintf("%f", x)
-	case TagString:
+	case TypeString:
 		x, _ := n.GetString()
 		return fmt.Sprintf("%s", x)
-	case TagList:
+	case TypeList:
 		x, _ := n.GetList()
-		return fmt.Sprintf("list[%d elements] of %v", x.Length(), x.typ)
-	case TagByteArray, TagIntArray, TagLongArray, TagCompound:
+		return fmt.Sprintf("list[%d elements] of %v", x.Length(), x.Contents)
+	case TypeByteArray, TypeIntArray, TypeLongArray, TypeCompound:
 		return fmt.Sprintf("%v [%d elements]", n.Type, n.Length())
 	}
 }
@@ -153,7 +154,7 @@ func printIndented(w io.Writer, p Payload, prefix interface{}, indent int) {
 		fmt.Fprintf(w, "[%d item long]", len(x))
 	case List:
 		length := x.Length()
-		fmt.Fprintf(w, "[%d %v list] {", length, x.typ)
+		fmt.Fprintf(w, "[%d %v list] {", length, x.Contents)
 		if length != 0 {
 			fmt.Fprintf(w, "\n")
 			x.Iterate(func(i int, p Payload) error { printIndented(w, p, i, indent+1); return nil })
@@ -170,18 +171,18 @@ func printIndented(w io.Writer, p Payload, prefix interface{}, indent int) {
 
 func (n NBT) Length() int {
 	switch n.Type {
-	case TagByteArray:
+	case TypeByteArray:
 		return len(n.payload.(ByteArray))
-	case TagIntArray:
+	case TypeIntArray:
 		return len(n.payload.(IntArray))
-	case TagLongArray:
+	case TypeLongArray:
 		return len(n.payload.(LongArray))
-	case TagCompound:
+	case TypeCompound:
 		return len(n.payload.(Compound))
-	case TagList:
+	case TypeList:
 		x, ok := n.payload.(List)
 		if !ok {
-			fmt.Printf("TagList with nil payload [%s]", n.Name)
+			fmt.Printf("TypeList with nil payload [%s]", n.Name)
 			return 0
 		}
 		return x.Length()

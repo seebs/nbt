@@ -8,26 +8,26 @@ import (
 )
 
 // End represents the NBT type TAG_End
-// Type() tells you that End represents TagEnd.
-func (End) Type() Tag { return TagEnd }
+// Type() tells you that End represents TypeEnd.
+func (End) Type() Type { return TypeEnd }
 
 func (n NBT) GetEnd() (out End, ok bool) {
-	if n.Type != TagEnd {
+	if n.Type != TypeEnd {
 		return out, false
 	}
 	return out, true
 }
 
 // Byte represents the NBT type TAG_Byte
-// Type() tells you that Byte represents TagByte.
-func (Byte) Type() Tag { return TagByte }
+// Type() tells you that Byte represents TypeByte.
+func (Byte) Type() Type { return TypeByte }
 
-// GetByte performs a type-assertion that n is of type TagByte. If
+// GetByte performs a type-assertion that n is of type TypeByte. If
 // it is, and there is a payload, you get the results of a type-assertion
 // of payload to Byte, otherwise you get a zero-valued Byte and ok is
 // false.
 func (n NBT) GetByte() (out Byte, ok bool) {
-	if n.Type != TagByte {
+	if n.Type != TypeByte {
 		return out, false
 	}
 	if n.payload == nil {
@@ -40,7 +40,7 @@ func (n NBT) GetByte() (out Byte, ok bool) {
 // GetByteList performs a type-assertion that l is a list of Byte,
 // and returns the corresponding slice.
 func (l List) GetByteList() (out []Byte, ok bool) {
-	if l.typ != TagByte {
+	if l.Contents != TypeByte {
 		return out, false
 	}
 	out, ok = l.data.([]Byte)
@@ -49,15 +49,15 @@ func (l List) GetByteList() (out []Byte, ok bool) {
 
 
 // Short represents the NBT type TAG_Short
-// Type() tells you that Short represents TagShort.
-func (Short) Type() Tag { return TagShort }
+// Type() tells you that Short represents TypeShort.
+func (Short) Type() Type { return TypeShort }
 
-// GetShort performs a type-assertion that n is of type TagShort. If
+// GetShort performs a type-assertion that n is of type TypeShort. If
 // it is, and there is a payload, you get the results of a type-assertion
 // of payload to Short, otherwise you get a zero-valued Short and ok is
 // false.
 func (n NBT) GetShort() (out Short, ok bool) {
-	if n.Type != TagShort {
+	if n.Type != TypeShort {
 		return out, false
 	}
 	if n.payload == nil {
@@ -70,7 +70,7 @@ func (n NBT) GetShort() (out Short, ok bool) {
 // GetShortList performs a type-assertion that l is a list of Short,
 // and returns the corresponding slice.
 func (l List) GetShortList() (out []Short, ok bool) {
-	if l.typ != TagShort {
+	if l.Contents != TypeShort {
 		return out, false
 	}
 	out, ok = l.data.([]Short)
@@ -79,15 +79,15 @@ func (l List) GetShortList() (out []Short, ok bool) {
 
 
 // Int represents the NBT type TAG_Int
-// Type() tells you that Int represents TagInt.
-func (Int) Type() Tag { return TagInt }
+// Type() tells you that Int represents TypeInt.
+func (Int) Type() Type { return TypeInt }
 
-// GetInt performs a type-assertion that n is of type TagInt. If
+// GetInt performs a type-assertion that n is of type TypeInt. If
 // it is, and there is a payload, you get the results of a type-assertion
 // of payload to Int, otherwise you get a zero-valued Int and ok is
 // false.
 func (n NBT) GetInt() (out Int, ok bool) {
-	if n.Type != TagInt {
+	if n.Type != TypeInt {
 		return out, false
 	}
 	if n.payload == nil {
@@ -100,7 +100,7 @@ func (n NBT) GetInt() (out Int, ok bool) {
 // GetIntList performs a type-assertion that l is a list of Int,
 // and returns the corresponding slice.
 func (l List) GetIntList() (out []Int, ok bool) {
-	if l.typ != TagInt {
+	if l.Contents != TypeInt {
 		return out, false
 	}
 	out, ok = l.data.([]Int)
@@ -109,15 +109,15 @@ func (l List) GetIntList() (out []Int, ok bool) {
 
 
 // Long represents the NBT type TAG_Long
-// Type() tells you that Long represents TagLong.
-func (Long) Type() Tag { return TagLong }
+// Type() tells you that Long represents TypeLong.
+func (Long) Type() Type { return TypeLong }
 
-// GetLong performs a type-assertion that n is of type TagLong. If
+// GetLong performs a type-assertion that n is of type TypeLong. If
 // it is, and there is a payload, you get the results of a type-assertion
 // of payload to Long, otherwise you get a zero-valued Long and ok is
 // false.
 func (n NBT) GetLong() (out Long, ok bool) {
-	if n.Type != TagLong {
+	if n.Type != TypeLong {
 		return out, false
 	}
 	if n.payload == nil {
@@ -130,7 +130,7 @@ func (n NBT) GetLong() (out Long, ok bool) {
 // GetLongList performs a type-assertion that l is a list of Long,
 // and returns the corresponding slice.
 func (l List) GetLongList() (out []Long, ok bool) {
-	if l.typ != TagLong {
+	if l.Contents != TypeLong {
 		return out, false
 	}
 	out, ok = l.data.([]Long)
@@ -139,15 +139,15 @@ func (l List) GetLongList() (out []Long, ok bool) {
 
 
 // Float represents the NBT type TAG_Float
-// Type() tells you that Float represents TagFloat.
-func (Float) Type() Tag { return TagFloat }
+// Type() tells you that Float represents TypeFloat.
+func (Float) Type() Type { return TypeFloat }
 
-// GetFloat performs a type-assertion that n is of type TagFloat. If
+// GetFloat performs a type-assertion that n is of type TypeFloat. If
 // it is, and there is a payload, you get the results of a type-assertion
 // of payload to Float, otherwise you get a zero-valued Float and ok is
 // false.
 func (n NBT) GetFloat() (out Float, ok bool) {
-	if n.Type != TagFloat {
+	if n.Type != TypeFloat {
 		return out, false
 	}
 	if n.payload == nil {
@@ -160,7 +160,7 @@ func (n NBT) GetFloat() (out Float, ok bool) {
 // GetFloatList performs a type-assertion that l is a list of Float,
 // and returns the corresponding slice.
 func (l List) GetFloatList() (out []Float, ok bool) {
-	if l.typ != TagFloat {
+	if l.Contents != TypeFloat {
 		return out, false
 	}
 	out, ok = l.data.([]Float)
@@ -169,15 +169,15 @@ func (l List) GetFloatList() (out []Float, ok bool) {
 
 
 // Double represents the NBT type TAG_Double
-// Type() tells you that Double represents TagDouble.
-func (Double) Type() Tag { return TagDouble }
+// Type() tells you that Double represents TypeDouble.
+func (Double) Type() Type { return TypeDouble }
 
-// GetDouble performs a type-assertion that n is of type TagDouble. If
+// GetDouble performs a type-assertion that n is of type TypeDouble. If
 // it is, and there is a payload, you get the results of a type-assertion
 // of payload to Double, otherwise you get a zero-valued Double and ok is
 // false.
 func (n NBT) GetDouble() (out Double, ok bool) {
-	if n.Type != TagDouble {
+	if n.Type != TypeDouble {
 		return out, false
 	}
 	if n.payload == nil {
@@ -190,7 +190,7 @@ func (n NBT) GetDouble() (out Double, ok bool) {
 // GetDoubleList performs a type-assertion that l is a list of Double,
 // and returns the corresponding slice.
 func (l List) GetDoubleList() (out []Double, ok bool) {
-	if l.typ != TagDouble {
+	if l.Contents != TypeDouble {
 		return out, false
 	}
 	out, ok = l.data.([]Double)
@@ -199,15 +199,15 @@ func (l List) GetDoubleList() (out []Double, ok bool) {
 
 
 // ByteArray represents the NBT type TAG_ByteArray
-// Type() tells you that ByteArray represents TagByteArray.
-func (ByteArray) Type() Tag { return TagByteArray }
+// Type() tells you that ByteArray represents TypeByteArray.
+func (ByteArray) Type() Type { return TypeByteArray }
 
-// GetByteArray performs a type-assertion that n is of type TagByteArray. If
+// GetByteArray performs a type-assertion that n is of type TypeByteArray. If
 // it is, and there is a payload, you get the results of a type-assertion
 // of payload to ByteArray, otherwise you get a zero-valued ByteArray and ok is
 // false.
 func (n NBT) GetByteArray() (out ByteArray, ok bool) {
-	if n.Type != TagByteArray {
+	if n.Type != TypeByteArray {
 		return out, false
 	}
 	if n.payload == nil {
@@ -220,7 +220,7 @@ func (n NBT) GetByteArray() (out ByteArray, ok bool) {
 // GetByteArrayList performs a type-assertion that l is a list of ByteArray,
 // and returns the corresponding slice.
 func (l List) GetByteArrayList() (out []ByteArray, ok bool) {
-	if l.typ != TagByteArray {
+	if l.Contents != TypeByteArray {
 		return out, false
 	}
 	out, ok = l.data.([]ByteArray)
@@ -229,15 +229,15 @@ func (l List) GetByteArrayList() (out []ByteArray, ok bool) {
 
 
 // String represents the NBT type TAG_String
-// Type() tells you that String represents TagString.
-func (String) Type() Tag { return TagString }
+// Type() tells you that String represents TypeString.
+func (String) Type() Type { return TypeString }
 
-// GetString performs a type-assertion that n is of type TagString. If
+// GetString performs a type-assertion that n is of type TypeString. If
 // it is, and there is a payload, you get the results of a type-assertion
 // of payload to String, otherwise you get a zero-valued String and ok is
 // false.
 func (n NBT) GetString() (out String, ok bool) {
-	if n.Type != TagString {
+	if n.Type != TypeString {
 		return out, false
 	}
 	if n.payload == nil {
@@ -250,7 +250,7 @@ func (n NBT) GetString() (out String, ok bool) {
 // GetStringList performs a type-assertion that l is a list of String,
 // and returns the corresponding slice.
 func (l List) GetStringList() (out []String, ok bool) {
-	if l.typ != TagString {
+	if l.Contents != TypeString {
 		return out, false
 	}
 	out, ok = l.data.([]String)
@@ -259,15 +259,15 @@ func (l List) GetStringList() (out []String, ok bool) {
 
 
 // List represents the NBT type TAG_List
-// Type() tells you that List represents TagList.
-func (List) Type() Tag { return TagList }
+// Type() tells you that List represents TypeList.
+func (List) Type() Type { return TypeList }
 
-// GetList performs a type-assertion that n is of type TagList. If
+// GetList performs a type-assertion that n is of type TypeList. If
 // it is, and there is a payload, you get the results of a type-assertion
 // of payload to List, otherwise you get a zero-valued List and ok is
 // false.
 func (n NBT) GetList() (out List, ok bool) {
-	if n.Type != TagList {
+	if n.Type != TypeList {
 		return out, false
 	}
 	if n.payload == nil {
@@ -280,7 +280,7 @@ func (n NBT) GetList() (out List, ok bool) {
 // GetListList performs a type-assertion that l is a list of List,
 // and returns the corresponding slice.
 func (l List) GetListList() (out []List, ok bool) {
-	if l.typ != TagList {
+	if l.Contents != TypeList {
 		return out, false
 	}
 	out, ok = l.data.([]List)
@@ -289,15 +289,15 @@ func (l List) GetListList() (out []List, ok bool) {
 
 
 // Compound represents the NBT type TAG_Compound
-// Type() tells you that Compound represents TagCompound.
-func (Compound) Type() Tag { return TagCompound }
+// Type() tells you that Compound represents TypeCompound.
+func (Compound) Type() Type { return TypeCompound }
 
-// GetCompound performs a type-assertion that n is of type TagCompound. If
+// GetCompound performs a type-assertion that n is of type TypeCompound. If
 // it is, and there is a payload, you get the results of a type-assertion
 // of payload to Compound, otherwise you get a zero-valued Compound and ok is
 // false.
 func (n NBT) GetCompound() (out Compound, ok bool) {
-	if n.Type != TagCompound {
+	if n.Type != TypeCompound {
 		return out, false
 	}
 	if n.payload == nil {
@@ -310,7 +310,7 @@ func (n NBT) GetCompound() (out Compound, ok bool) {
 // GetCompoundList performs a type-assertion that l is a list of Compound,
 // and returns the corresponding slice.
 func (l List) GetCompoundList() (out []Compound, ok bool) {
-	if l.typ != TagCompound {
+	if l.Contents != TypeCompound {
 		return out, false
 	}
 	out, ok = l.data.([]Compound)
@@ -319,15 +319,15 @@ func (l List) GetCompoundList() (out []Compound, ok bool) {
 
 
 // IntArray represents the NBT type TAG_IntArray
-// Type() tells you that IntArray represents TagIntArray.
-func (IntArray) Type() Tag { return TagIntArray }
+// Type() tells you that IntArray represents TypeIntArray.
+func (IntArray) Type() Type { return TypeIntArray }
 
-// GetIntArray performs a type-assertion that n is of type TagIntArray. If
+// GetIntArray performs a type-assertion that n is of type TypeIntArray. If
 // it is, and there is a payload, you get the results of a type-assertion
 // of payload to IntArray, otherwise you get a zero-valued IntArray and ok is
 // false.
 func (n NBT) GetIntArray() (out IntArray, ok bool) {
-	if n.Type != TagIntArray {
+	if n.Type != TypeIntArray {
 		return out, false
 	}
 	if n.payload == nil {
@@ -340,7 +340,7 @@ func (n NBT) GetIntArray() (out IntArray, ok bool) {
 // GetIntArrayList performs a type-assertion that l is a list of IntArray,
 // and returns the corresponding slice.
 func (l List) GetIntArrayList() (out []IntArray, ok bool) {
-	if l.typ != TagIntArray {
+	if l.Contents != TypeIntArray {
 		return out, false
 	}
 	out, ok = l.data.([]IntArray)
@@ -349,15 +349,15 @@ func (l List) GetIntArrayList() (out []IntArray, ok bool) {
 
 
 // LongArray represents the NBT type TAG_LongArray
-// Type() tells you that LongArray represents TagLongArray.
-func (LongArray) Type() Tag { return TagLongArray }
+// Type() tells you that LongArray represents TypeLongArray.
+func (LongArray) Type() Type { return TypeLongArray }
 
-// GetLongArray performs a type-assertion that n is of type TagLongArray. If
+// GetLongArray performs a type-assertion that n is of type TypeLongArray. If
 // it is, and there is a payload, you get the results of a type-assertion
 // of payload to LongArray, otherwise you get a zero-valued LongArray and ok is
 // false.
 func (n NBT) GetLongArray() (out LongArray, ok bool) {
-	if n.Type != TagLongArray {
+	if n.Type != TypeLongArray {
 		return out, false
 	}
 	if n.payload == nil {
@@ -370,7 +370,7 @@ func (n NBT) GetLongArray() (out LongArray, ok bool) {
 // GetLongArrayList performs a type-assertion that l is a list of LongArray,
 // and returns the corresponding slice.
 func (l List) GetLongArrayList() (out []LongArray, ok bool) {
-	if l.typ != TagLongArray {
+	if l.Contents != TypeLongArray {
 		return out, false
 	}
 	out, ok = l.data.([]LongArray)
@@ -495,7 +495,7 @@ func (l List) storeData(w io.Writer) (err error) {
 		}
 
 	default:
-		return fmt.Errorf("unhandled tag type in List.storeData: %v", l.typ)
+		return fmt.Errorf("unhandled tag type in List.storeData: %v", l.Contents)
 	}
 	return nil
 }
@@ -503,13 +503,13 @@ func (l List) storeData(w io.Writer) (err error) {
 // loadData loads the "raw" data array, which we'll later use to build
 // the interface array.
 func (l List) loadData(r io.Reader, count int) (err error) {
-	switch l.typ {
+	switch l.Contents {
 
-	case TagEnd: // nothing to load
+	case TypeEnd: // nothing to load
 		l.data = nil
 		return nil
 
-	case TagByte:
+	case TypeByte:
 		raw := make([]Byte, count)
 		for i := 0; i < count; i++ {
 			raw[i], err = LoadByte(r)
@@ -521,7 +521,7 @@ func (l List) loadData(r io.Reader, count int) (err error) {
 		l.data = raw
 		return err
 
-	case TagShort:
+	case TypeShort:
 		raw := make([]Short, count)
 		for i := 0; i < count; i++ {
 			raw[i], err = LoadShort(r)
@@ -533,7 +533,7 @@ func (l List) loadData(r io.Reader, count int) (err error) {
 		l.data = raw
 		return err
 
-	case TagInt:
+	case TypeInt:
 		raw := make([]Int, count)
 		for i := 0; i < count; i++ {
 			raw[i], err = LoadInt(r)
@@ -545,7 +545,7 @@ func (l List) loadData(r io.Reader, count int) (err error) {
 		l.data = raw
 		return err
 
-	case TagLong:
+	case TypeLong:
 		raw := make([]Long, count)
 		for i := 0; i < count; i++ {
 			raw[i], err = LoadLong(r)
@@ -557,7 +557,7 @@ func (l List) loadData(r io.Reader, count int) (err error) {
 		l.data = raw
 		return err
 
-	case TagFloat:
+	case TypeFloat:
 		raw := make([]Float, count)
 		for i := 0; i < count; i++ {
 			raw[i], err = LoadFloat(r)
@@ -569,7 +569,7 @@ func (l List) loadData(r io.Reader, count int) (err error) {
 		l.data = raw
 		return err
 
-	case TagDouble:
+	case TypeDouble:
 		raw := make([]Double, count)
 		for i := 0; i < count; i++ {
 			raw[i], err = LoadDouble(r)
@@ -581,7 +581,7 @@ func (l List) loadData(r io.Reader, count int) (err error) {
 		l.data = raw
 		return err
 
-	case TagByteArray:
+	case TypeByteArray:
 		raw := make([]ByteArray, count)
 		for i := 0; i < count; i++ {
 			raw[i], err = LoadByteArray(r)
@@ -593,7 +593,7 @@ func (l List) loadData(r io.Reader, count int) (err error) {
 		l.data = raw
 		return err
 
-	case TagString:
+	case TypeString:
 		raw := make([]String, count)
 		for i := 0; i < count; i++ {
 			raw[i], err = LoadString(r)
@@ -605,7 +605,7 @@ func (l List) loadData(r io.Reader, count int) (err error) {
 		l.data = raw
 		return err
 
-	case TagList:
+	case TypeList:
 		raw := make([]List, count)
 		for i := 0; i < count; i++ {
 			raw[i], err = LoadList(r)
@@ -617,7 +617,7 @@ func (l List) loadData(r io.Reader, count int) (err error) {
 		l.data = raw
 		return err
 
-	case TagCompound:
+	case TypeCompound:
 		raw := make([]Compound, count)
 		for i := 0; i < count; i++ {
 			raw[i], err = LoadCompound(r)
@@ -629,7 +629,7 @@ func (l List) loadData(r io.Reader, count int) (err error) {
 		l.data = raw
 		return err
 
-	case TagIntArray:
+	case TypeIntArray:
 		raw := make([]IntArray, count)
 		for i := 0; i < count; i++ {
 			raw[i], err = LoadIntArray(r)
@@ -641,7 +641,7 @@ func (l List) loadData(r io.Reader, count int) (err error) {
 		l.data = raw
 		return err
 
-	case TagLongArray:
+	case TypeLongArray:
 		raw := make([]LongArray, count)
 		for i := 0; i < count; i++ {
 			raw[i], err = LoadLongArray(r)
@@ -654,7 +654,7 @@ func (l List) loadData(r io.Reader, count int) (err error) {
 		return err
 
 	default:
-		return fmt.Errorf("unhandled tag type in List.loadData: %v", l.typ)
+		return fmt.Errorf("unhandled tag type in List.loadData: %v", l.Contents)
 	}
 }
 
@@ -782,7 +782,7 @@ err = fn(i, raw[i])
 			}
 		}
 	default:
-		return fmt.Errorf("unhandled tag type in List.Iterate: %v", l.typ)
+		return fmt.Errorf("unhandled tag type in List.Iterate: %v", l.Contents)
 	}
 	return err
 }

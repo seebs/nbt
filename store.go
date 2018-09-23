@@ -13,8 +13,8 @@ import (
 // Store stores `n` to the provided io.Writer. It does
 // not handle compression; for that, use the non-method Store.
 func (n NBT) Store(w io.Writer) error {
-	// TagEnd doesn't get its name written.
-	if n.Type == TagEnd {
+	// TypeEnd doesn't get its name written.
+	if n.Type == TypeEnd {
 		_, err := w.Write([]byte{0})
 		return err
 	}
@@ -126,7 +126,7 @@ func (p String) store(w io.Writer) error {
 }
 
 func (p List) store(w io.Writer) error {
-	err := Byte(p.typ).store(w)
+	err := Byte(p.Contents).store(w)
 	if err != nil {
 		return err
 	}
@@ -146,7 +146,7 @@ func (p Compound) store(w io.Writer) error {
 			return err
 		}
 	}
-	end := NBT{Name: "", Type: TagEnd, payload: nil}
+	end := NBT{Name: "", Type: TypeEnd, payload: nil}
 	return end.Store(w)
 }
 

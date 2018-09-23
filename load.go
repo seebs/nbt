@@ -157,7 +157,7 @@ func LoadList(r io.Reader) (l List, e error) {
 	if e != nil {
 		return l, e
 	}
-	if Tag(ttype) < TagEnd || Tag(ttype) >= TagMax {
+	if Type(ttype) < TypeEnd || Type(ttype) >= TypeMax {
 		return l, fmt.Errorf("invalid tag type for list: %d", ttype)
 	}
 	count, e := LoadInt(r)
@@ -167,19 +167,19 @@ func LoadList(r io.Reader) (l List, e error) {
 	if count < 0 {
 		return l, fmt.Errorf("invalid negative count for list: %d", count)
 	}
-	l.typ = Tag(ttype)
+	l.Contents = Type(ttype)
 	e = l.loadData(r, int(count))
 	return l, e
 }
 
 // LoadCompound loads a Compound tag, thus, loads other tags until it gets
-// a TagEnd.
+// a TypeEnd.
 func LoadCompound(r io.Reader) (c Compound, e error) {
 	c = make(map[string]NBT)
 	var n NBT
 	var err error
 	var errored error // an error we handle after the fact
-	for n, err = LoadUncompressed(r); err == nil && n.Type != TagEnd; n, err = LoadUncompressed(r) {
+	for n, err = LoadUncompressed(r); err == nil && n.Type != TypeEnd; n, err = LoadUncompressed(r) {
 		// fmt.Printf("loaded tag: [%v] %s\n", n.Type, n.Name)
 		_, ok := c[n.Name]
 		if ok {
@@ -188,7 +188,7 @@ func LoadCompound(r io.Reader) (c Compound, e error) {
 		}
 		c[n.Name] = n
 	}
-	if n.Type != TagEnd {
+	if n.Type != TypeEnd {
 		fmt.Printf("failed load compound\n")
 		return c, fmt.Errorf("unterminated compound tag")
 	}
@@ -213,12 +213,12 @@ func LoadUncompressed(r io.Reader) (NBT, error) {
 	if err != nil {
 		return NBT{}, err
 	}
-	tag := Tag(tagByte[0])
+	tag := Type(tagByte[0])
 	n := NBT{Type: tag}
-	if n.Type == TagEnd {
+	if n.Type == TypeEnd {
 		return n, nil
 	}
-	// every tag other than TagEnd has a name:
+	// every tag other than TypeEnd has a name:
 	name, err := LoadString(r)
 	if err != nil {
 		return n, err
@@ -226,29 +226,29 @@ func LoadUncompressed(r io.Reader) (NBT, error) {
 	n.Name = string(name)
 	// fmt.Printf("load: %s [%v]\n", n.Name, n.Type)
 	switch n.Type {
-	case TagByte:
+	case TypeByte:
 		n.payload, err = LoadByte(r)
-	case TagShort:
+	case TypeShort:
 		n.payload, err = LoadShort(r)
-	case TagInt:
+	case TypeInt:
 		n.payload, err = LoadInt(r)
-	case TagLong:
+	case TypeLong:
 		n.payload, err = LoadLong(r)
-	case TagFloat:
+	case TypeFloat:
 		n.payload, err = LoadFloat(r)
-	case TagDouble:
+	case TypeDouble:
 		n.payload, err = LoadDouble(r)
-	case TagByteArray:
+	case TypeByteArray:
 		n.payload, err = LoadByteArray(r)
-	case TagString:
+	case TypeString:
 		n.payload, err = LoadString(r)
-	case TagList:
+	case TypeList:
 		n.payload, err = LoadList(r)
-	case TagCompound:
+	case TypeCompound:
 		n.payload, err = LoadCompound(r)
-	case TagIntArray:
+	case TypeIntArray:
 		n.payload, err = LoadIntArray(r)
-	case TagLongArray:
+	case TypeLongArray:
 		n.payload, err = LoadLongArray(r)
 	default:
 		err = fmt.Errorf("unsupported tag type %v", n.Type)

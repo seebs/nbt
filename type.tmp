@@ -9,16 +9,16 @@ import (
 
 {{range . -}}
 // {{.}} represents the NBT type TAG_{{.}}
-// Type() tells you that {{.}} represents Tag{{.}}.
-func ({{.}}) Type() Tag { return Tag{{.}} }
+// Type() tells you that {{.}} represents Type{{.}}.
+func ({{.}}) Type() Type { return Type{{.}} }
 
 {{if ne . "End" -}}
-// Get{{.}} performs a type-assertion that n is of type Tag{{.}}. If
+// Get{{.}} performs a type-assertion that n is of type Type{{.}}. If
 // it is, and there is a payload, you get the results of a type-assertion
 // of payload to {{.}}, otherwise you get a zero-valued {{.}} and ok is
 // false.
 func (n NBT) Get{{.}}() (out {{.}}, ok bool) {
-	if n.Type != Tag{{.}} {
+	if n.Type != Type{{.}} {
 		return out, false
 	}
 	if n.payload == nil {
@@ -31,7 +31,7 @@ func (n NBT) Get{{.}}() (out {{.}}, ok bool) {
 // Get{{.}}List performs a type-assertion that l is a list of {{.}},
 // and returns the corresponding slice.
 func (l List) Get{{.}}List() (out []{{.}}, ok bool) {
-	if l.typ != Tag{{.}} {
+	if l.Contents != Type{{.}} {
 		return out, false
 	}
 	out, ok = l.data.([]{{.}})
@@ -40,7 +40,7 @@ func (l List) Get{{.}}List() (out []{{.}}, ok bool) {
 
 {{else}}{{/* End is a special case; nothing to type-assert. */ -}}
 func (n NBT) GetEnd() (out End, ok bool) {
-	if n.Type != TagEnd {
+	if n.Type != TypeEnd {
 		return out, false
 	}
 	return out, true
@@ -66,7 +66,7 @@ func (l List) storeData(w io.Writer) (err error) {
 {{end}}
 {{- end}}
 	default:
-		return fmt.Errorf("unhandled tag type in List.storeData: %v", l.typ)
+		return fmt.Errorf("unhandled tag type in List.storeData: %v", l.Contents)
 	}
 	return nil
 }
@@ -74,10 +74,10 @@ func (l List) storeData(w io.Writer) (err error) {
 // loadData loads the "raw" data array, which we'll later use to build
 // the interface array.
 func (l List) loadData(r io.Reader, count int) (err error) {
-	switch l.typ {
+	switch l.Contents {
 {{range . -}}
 {{if ne . "End"}}
-	case Tag{{.}}:
+	case Type{{.}}:
 		raw := make([]{{.}}, count)
 		for i := 0; i < count; i++ {
 			raw[i], err = Load{{.}}(r)
@@ -89,13 +89,13 @@ func (l List) loadData(r io.Reader, count int) (err error) {
 		l.data = raw
 		return err
 {{else}}
-	case TagEnd: // nothing to load
+	case TypeEnd: // nothing to load
 		l.data = nil
 		return nil
 {{end}}
 {{- end}}
 	default:
-		return fmt.Errorf("unhandled tag type in List.loadData: %v", l.typ)
+		return fmt.Errorf("unhandled tag type in List.loadData: %v", l.Contents)
 	}
 }
 
@@ -119,7 +119,7 @@ func (l List) Iterate(fn func(int, Payload) error) (err error) {
 		}
 {{- end}}
 	default:
-		return fmt.Errorf("unhandled tag type in List.Iterate: %v", l.typ)
+		return fmt.Errorf("unhandled tag type in List.Iterate: %v", l.Contents)
 	}
 	return err
 }

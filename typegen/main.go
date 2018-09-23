@@ -1,4 +1,4 @@
-// The taggen command exists to generate some generic code from templates, because
+// The typegen command exists to generate some generic code from templates, because
 // there's some methods which can be generated entirely automatically from a
 // single known word.
 package main

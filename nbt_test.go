@@ -7,9 +7,9 @@ import (
 
 func TestRoundTrip(t *testing.T) {
 	c := make(Compound)
-	c["foo"] = NBT{payload: String("bar"), Type: TagString, Name: "foo"}
+	c["foo"] = NBT{payload: String("bar"), Type: TypeString, Name: "foo"}
 	buf := &bytes.Buffer{}
-	n := NBT{Type: TagCompound, Name: "top", payload: c}
+	n := NBT{Type: TypeCompound, Name: "top", payload: c}
 	// store x into buf
 	err := Store(buf, n)
 	// fmt.Printf("buf: % x", buf)
@@ -21,7 +21,7 @@ func TestRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Logf("unexpected load err: %s", err)
 	}
-	if y.Type != TagCompound {
+	if y.Type != TypeCompound {
 		t.Logf("didn't get a string back: %v", y.Type)
 	}
 	if y.payload == nil {
