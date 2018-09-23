@@ -1,0 +1,107 @@
+package nbt
+
+// GENERATED CODE: Do not edit. See taggen/main.go and tag.go.
+
+import (
+	"fmt"
+	"io"
+)
+
+{{range . -}}
+// {{.}} represents the NBT type TAG_{{.}}
+// Type() tells you that {{.}} represents Tag{{.}}.
+func ({{.}}) Type() Tag { return Tag{{.}} }
+
+{{if ne . "End" -}}
+// Get{{.}} performs a type-assertion that n is of type Tag{{.}}. If
+// it is, and there is a payload, you get the results of a type-assertion
+// of payload to {{.}}, otherwise you get a zero-valued {{.}} and ok is
+// false.
+func (n NBT) Get{{.}}() (out {{.}}, ok bool) {
+	if n.Type != Tag{{.}} {
+		return out, false
+	}
+	if n.payload == nil {
+		return out, false
+	}
+	out, ok = n.payload.({{.}})
+	return out, ok
+}
+
+// Get{{.}}List performs a type-assertion that l is a list of {{.}},
+// and returns the corresponding slice.
+func (l List) Get{{.}}List() (out []{{.}}, ok bool) {
+	if l.typ != Tag{{.}} {
+		return out, false
+	}
+	out, ok = l.rawData.([]{{.}})
+	return out, ok
+}
+
+{{else}}{{/* End is a special case; nothing to type-assert. */ -}}
+func (n NBT) GetEnd() (out End, ok bool) {
+	if n.Type != TagEnd {
+		return out, false
+	}
+	return out, true
+}
+{{end}}
+{{end}}
+
+func (l List) storeData(w io.Writer) (err error) {
+	// interface slice and raw data slice are the same length
+	count := len(l.data)
+	switch raw := l.rawData.(type) {
+{{range . -}}
+{{if ne . "End"}}
+	case []{{.}}:
+		for i := 0; i < count; i++ {
+			err = raw[i].store(w)
+			if err != nil {
+				return err
+			}
+		}
+{{else}}
+	case []End: // no data to store
+		return nil
+{{end}}
+{{- end}}
+	default:
+		return fmt.Errorf("unhandled tag type in List.storeData: %v", l.typ)
+	}
+	return nil
+}
+
+// loadData loads the "raw" data array, which we'll later use to build
+// the interface array.
+func (l List) loadData(r io.Reader, count int) (err error) {
+	switch l.typ {
+{{range . -}}
+{{if ne . "End"}}
+	case Tag{{.}}:
+		raw := make([]{{.}}, count)
+		for i := 0; i < count; i++ {
+			raw[i], err = Load{{.}}(r)
+			if err!= nil {
+				raw = raw[:i]
+				break
+			}
+		}
+		l.rawData = raw
+		// wrap the raw data in Payload interfaces for later convenience
+		l.data = make([]Payload, len(raw))
+		for i, r := range raw {
+			l.data[i] = r
+		}
+		return err
+{{else}}
+	case TagEnd: // nothing to load
+		l.data = nil
+		l.rawData = nil
+		return nil
+{{end}}
+{{- end}}
+	default:
+		return fmt.Errorf("unhandled tag type in List.loadData: %v", l.typ)
+	}
+}

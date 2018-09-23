@@ -9,6 +9,7 @@ import (
 	"math"
 	"unsafe"
 )
+
 // Functions related to loading NBT tags from streams.
 
 // LoadByte loads a Byte payload.
@@ -167,16 +168,7 @@ func LoadList(r io.Reader) (l List, e error) {
 		return l, fmt.Errorf("invalid negative count for list: %d", count)
 	}
 	l.typ = Tag(ttype)
-	l.data = make([]Payload, count)
-	// fmt.Printf("list: %v[%d]\n", l.typ, count)
-	for i := 0; i < int(count); i++ {
-		// fmt.Printf("item %d\n", i)
-		l.data[i], e = LoadPayload(l.typ, r)
-		if e != nil {
-			fmt.Printf("list failed at %d: %s\n", i, e)
-			break
-		}
-	}
+	e = l.loadData(r, int(count))
 	return l, e
 }
 

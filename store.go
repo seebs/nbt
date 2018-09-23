@@ -1,15 +1,14 @@
 package nbt
 
 import (
-	"fmt"
 	"compress/gzip"
+	"fmt"
 	"io"
 	"math"
 	"unsafe"
 )
 
 // functionality related to storing NBT data to streams
-
 
 // Store stores `n` to the provided io.Writer. It does
 // not handle compression; for that, use the non-method Store.
@@ -136,17 +135,7 @@ func (p List) store(w io.Writer) error {
 	if err != nil {
 		return err
 	}
-	for i := 0; i < int(l); i++ {
-		if p.data[i].Type() != p.typ {
-			return fmt.Errorf("list mismatch, expecting %v, found %v", p.typ, p.data[i].Type())
-		}
-		// store just the payloads, not the whole objects
-		err = p.data[i].store(w)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+	return p.storeData(w)
 }
 
 func (p Compound) store(w io.Writer) error {

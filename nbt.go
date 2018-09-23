@@ -2,6 +2,8 @@
 // NBT data format.
 package nbt
 
+//go:generate go run taggen/main.go -in tag.tmp -out tagdata.go End Byte Short Int Long Float Double ByteArray String List Compound IntArray LongArray
+
 import (
 	"fmt"
 	"io"
@@ -36,129 +38,6 @@ type NBT struct {
 	payload Payload
 }
 
-// GetEnd returns the (useless) End value.
-func (n NBT) GetEnd() (e End, ok bool) {
-	if n.Type != TagEnd {
-		return End{}, false
-	}
-	return End{}, true
-}
-
-// GetByte returns the Byte value.
-func (n NBT) GetByte() (o Byte, ok bool) {
-	if n.Type != TagByte {
-		return 0, false
-	}
-	// handle nil payload with zero value
-	if n.payload == nil {
-		return o, true
-	}
-	o = n.payload.(Byte)
-	return o, true
-}
-
-// GetShort returns the Short value.
-func (n NBT) GetShort() (o Short, ok bool) {
-	if n.Type != TagShort {
-		return 0, false
-	}
-	// handle nil payload with zero value
-	if n.payload == nil {
-		return o, true
-	}
-	o = n.payload.(Short)
-	return o, true
-}
-
-// GetInt returns the Int value.
-func (n NBT) GetInt() (o Int, ok bool) {
-	if n.Type != TagInt {
-		return 0, false
-	}
-	// handle nil payload with zero value
-	if n.payload == nil {
-		return o, true
-	}
-	o = n.payload.(Int)
-	return o, true
-}
-
-// GetLong returns the Long value.
-func (n NBT) GetLong() (o Long, ok bool) {
-	if n.Type != TagLong {
-		return 0, false
-	}
-	// handle nil payload with zero value
-	if n.payload == nil {
-		return o, true
-	}
-	o = n.payload.(Long)
-	return o, true
-}
-
-// GetFloat returns the Float value.
-func (n NBT) GetFloat() (o Float, ok bool) {
-	if n.Type != TagFloat {
-		return 0, false
-	}
-	// handle nil payload with zero value
-	if n.payload == nil {
-		return o, true
-	}
-	o = n.payload.(Float)
-	return o, true
-}
-
-// GetDouble returns the Double value.
-func (n NBT) GetDouble() (o Double, ok bool) {
-	if n.Type != TagDouble {
-		return 0, false
-	}
-	// handle nil payload with zero value
-	if n.payload == nil {
-		return o, true
-	}
-	o = n.payload.(Double)
-	return o, true
-}
-
-// GetString returns the String value.
-func (n NBT) GetString() (s String, ok bool) {
-	if n.Type != TagString {
-		return s, false
-	}
-	// handle nil payload with zero value
-	if n.payload == nil {
-		return s, true
-	}
-	s = n.payload.(String)
-	return s, true
-}
-
-// GetList returns the List value.
-func (n NBT) GetList() (o List, ok bool) {
-	if n.Type != TagList {
-		return o, false
-	}
-	if n.payload == nil {
-		return o, true
-	}
-	o = n.payload.(List)
-	return o, true
-}
-
-// GetCompound returns the Compound value.
-func (n NBT) GetCompound() (o Compound, ok bool) {
-	if n.Type != TagCompound {
-		return o, false
-	}
-	if n.payload == nil {
-		return o, true
-	}
-	o = n.payload.(Compound)
-	return o, true
-}
-
 // A Payload represents the payload associated with a named tag.
 type Payload interface {
 	Type() Tag
@@ -181,9 +60,15 @@ type Float float32
 type Double float64
 type ByteArray []int8
 type String string
+
+// List is a pain to work with. To avoid massive duplication in allocation,
+// the slice of payload interfaces are boxing a slice of the underlying
+// type. Since those slices have no type in common, we use interface{} for
+// them.
 type List struct {
-	typ  Tag
-	data []Payload
+	typ     Tag
+	data    []Payload
+	rawData interface{}
 }
 type Compound map[string]NBT
 type IntArray []Int
@@ -192,21 +77,6 @@ type LongArray []Long
 // You never actually have to make an End to put in a List Of End objects,
 // so we check the interface thing here for consistency.
 var _ Payload = End{}
-
-// This is an argument for or against generics support.
-func (p End) Type() Tag       { return TagEnd }
-func (p Byte) Type() Tag      { return TagByte }
-func (p Short) Type() Tag     { return TagShort }
-func (p Int) Type() Tag       { return TagInt }
-func (p Long) Type() Tag      { return TagLong }
-func (p Float) Type() Tag     { return TagFloat }
-func (p Double) Type() Tag    { return TagDouble }
-func (p ByteArray) Type() Tag { return TagByteArray }
-func (p String) Type() Tag    { return TagString }
-func (p List) Type() Tag      { return TagList }
-func (p Compound) Type() Tag  { return TagCompound }
-func (p IntArray) Type() Tag  { return TagIntArray }
-func (p LongArray) Type() Tag { return TagLongArray }
 
 func (n NBT) String() string {
 	switch n.Type {
