@@ -30,9 +30,9 @@ const (
 	TypeMax
 )
 
-// NBT represents a single named tag. There is an internal representation
+// Tag represents a single named tag. There is an internal representation
 // of contents; use the Get*() methods to obtain contents.
-type NBT struct {
+type Tag struct {
 	Name    string
 	Type    Type
 	payload Payload
@@ -45,9 +45,9 @@ type Payload interface {
 }
 
 // Named takes a payload (such as a Compound, or String) and
-// wraps it into an NBT object with the given name.
-func Named(name string, payload Payload) NBT {
-	return NBT{Type: payload.Type(), Name: name, payload: payload}
+// wraps it into a Tag object with the given name.
+func Named(name string, payload Payload) Tag {
+	return Tag{Type: payload.Type(), Name: name, payload: payload}
 }
 
 // End doesn't even have a name, let alone contents.
@@ -68,7 +68,7 @@ type List struct {
 	Contents Type
 	data     interface{}
 }
-type Compound map[string]NBT
+type Compound map[string]Payload
 type IntArray []Int
 type LongArray []Long
 
@@ -76,7 +76,7 @@ type LongArray []Long
 // so we check the interface thing here for consistency.
 var _ Payload = End{}
 
-func (n NBT) String() string {
+func (n Tag) String() string {
 	switch n.Type {
 	default:
 		return fmt.Sprintf("[unknown tag %v]", n.Type)
@@ -111,8 +111,8 @@ func (n NBT) String() string {
 	}
 }
 
-// PrintIndented pretty-prints the given NBT.
-func (n NBT) PrintIndented(w io.Writer) {
+// PrintIndented pretty-prints the given Tag.
+func (n Tag) PrintIndented(w io.Writer) {
 	printIndented(w, n.payload, n.Name, 0)
 }
 
@@ -163,13 +163,13 @@ func printIndented(w io.Writer, p Payload, prefix interface{}, indent int) {
 	case Compound:
 		fmt.Fprintf(w, "compound [%d elements] {\n", len(x))
 		for k, v := range x {
-			printIndented(w, v.payload, k, indent+1)
+			printIndented(w, v, k, indent+1)
 		}
 		fmt.Fprintf(w, "%*s}", indent*2, "")
 	}
 }
 
-func (n NBT) Length() int {
+func (n Tag) Length() int {
 	switch n.Type {
 	case TypeByteArray:
 		return len(n.payload.(ByteArray))

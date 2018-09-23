@@ -175,98 +175,98 @@ func LoadList(r io.Reader) (l List, e error) {
 // LoadCompound loads a Compound tag, thus, loads other tags until it gets
 // a TypeEnd.
 func LoadCompound(r io.Reader) (c Compound, e error) {
-	c = make(map[string]NBT)
-	var n NBT
+	c = make(map[string]Payload)
+	var t Tag
 	var err error
 	var errored error // an error we handle after the fact
-	for n, err = LoadUncompressed(r); err == nil && n.Type != TypeEnd; n, err = LoadUncompressed(r) {
-		// fmt.Printf("loaded tag: [%v] %s\n", n.Type, n.Name)
-		_, ok := c[n.Name]
+	for t, err = LoadUncompressed(r); err == nil && t.Type != TypeEnd; t, err = LoadUncompressed(r) {
+		// fmt.Printf("loaded tag: [%v] %s\n", t.Type, t.Name)
+		_, ok := c[t.Name]
 		if ok {
 			// note the thing, but continue using the newer one
-			errored = fmt.Errorf("duplicate name '%s' in compound tag", n.Name)
+			errored = fmt.Errorf("duplicate name '%s' in compound tag", t.Name)
 		}
-		c[n.Name] = n
+		c[t.Name] = t.payload
 	}
-	if n.Type != TypeEnd {
+	if t.Type != TypeEnd {
 		fmt.Printf("failed load compound\n")
 		return c, fmt.Errorf("unterminated compound tag")
 	}
 	return c, errored
 }
 
-// LoadCompressed reads the first NBT found in the gzipped stream r.
-func LoadCompressed(r io.Reader) (NBT, error) {
+// LoadCompressed reads the first Tag found in the gzipped stream r.
+func LoadCompressed(r io.Reader) (Tag, error) {
 	uncomp, err := gzip.NewReader(r)
 	if err != nil {
-		return NBT{}, err
+		return Tag{}, err
 	}
 	defer uncomp.Close()
 	return LoadUncompressed(uncomp)
 }
 
-// LoadUncompressed reads the first NBT tag found in the uncompressed
+// LoadUncompressed reads the first Tag found in the uncompressed
 // stream r.
-func LoadUncompressed(r io.Reader) (NBT, error) {
+func LoadUncompressed(r io.Reader) (Tag, error) {
 	var tagByte [1]byte
 	_, err := io.ReadFull(r, tagByte[0:1])
 	if err != nil {
-		return NBT{}, err
+		return Tag{}, err
 	}
 	tag := Type(tagByte[0])
-	n := NBT{Type: tag}
-	if n.Type == TypeEnd {
-		return n, nil
+	t := Tag{Type: tag}
+	if t.Type == TypeEnd {
+		return t, nil
 	}
 	// every tag other than TypeEnd has a name:
 	name, err := LoadString(r)
 	if err != nil {
-		return n, err
+		return t, err
 	}
-	n.Name = string(name)
+	t.Name = string(name)
 	// fmt.Printf("load: %s [%v]\n", n.Name, n.Type)
-	switch n.Type {
+	switch t.Type {
 	case TypeByte:
-		n.payload, err = LoadByte(r)
+		t.payload, err = LoadByte(r)
 	case TypeShort:
-		n.payload, err = LoadShort(r)
+		t.payload, err = LoadShort(r)
 	case TypeInt:
-		n.payload, err = LoadInt(r)
+		t.payload, err = LoadInt(r)
 	case TypeLong:
-		n.payload, err = LoadLong(r)
+		t.payload, err = LoadLong(r)
 	case TypeFloat:
-		n.payload, err = LoadFloat(r)
+		t.payload, err = LoadFloat(r)
 	case TypeDouble:
-		n.payload, err = LoadDouble(r)
+		t.payload, err = LoadDouble(r)
 	case TypeByteArray:
-		n.payload, err = LoadByteArray(r)
+		t.payload, err = LoadByteArray(r)
 	case TypeString:
-		n.payload, err = LoadString(r)
+		t.payload, err = LoadString(r)
 	case TypeList:
-		n.payload, err = LoadList(r)
+		t.payload, err = LoadList(r)
 	case TypeCompound:
-		n.payload, err = LoadCompound(r)
+		t.payload, err = LoadCompound(r)
 	case TypeIntArray:
-		n.payload, err = LoadIntArray(r)
+		t.payload, err = LoadIntArray(r)
 	case TypeLongArray:
-		n.payload, err = LoadLongArray(r)
+		t.payload, err = LoadLongArray(r)
 	default:
-		err = fmt.Errorf("unsupported tag type %v", n.Type)
+		err = fmt.Errorf("unsupported tag type %v", t.Type)
 	}
 	if err != nil {
-		fmt.Printf("failed to load %s: %s\n", n.Name, err)
+		fmt.Printf("failed to load %s: %s\n", t.Name, err)
 	}
-	return n, err
+	return t, err
 }
 
 // Load attempts to determine whether the stream r is compressed or not,
 // and use LoadCompressed/LoadUncompressed accordingly.
-func Load(r io.Reader) (NBT, error) {
+func Load(r io.Reader) (Tag, error) {
 	buf := bufio.NewReader(r)
 	header, err := buf.Peek(512)
 	// couldn't read the thing
 	if err != nil && err != io.EOF {
-		return NBT{}, err
+		return Tag{}, err
 	}
 	readBuf := bytes.NewBuffer(header)
 	gz, err := gzip.NewReader(readBuf)

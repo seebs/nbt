@@ -8,11 +8,11 @@ import (
 	"unsafe"
 )
 
-// functionality related to storing NBT data to streams
+// functionality related to storing Tags to streams
 
 // Store stores `n` to the provided io.Writer. It does
 // not handle compression; for that, use the non-method Store.
-func (n NBT) Store(w io.Writer) error {
+func (n Tag) Store(w io.Writer) error {
 	// TypeEnd doesn't get its name written.
 	if n.Type == TypeEnd {
 		_, err := w.Write([]byte{0})
@@ -140,13 +140,12 @@ func (p List) store(w io.Writer) error {
 
 func (p Compound) store(w io.Writer) error {
 	for k, v := range p {
-		n := NBT{Name: k, Type: v.Type, payload: v.payload}
-		err := n.Store(w)
+		err := Tag{Name: k, Type: v.Type(), payload: v}.Store(w)
 		if err != nil {
 			return err
 		}
 	}
-	end := NBT{Name: "", Type: TypeEnd, payload: nil}
+	end := Tag{Name: "", Type: TypeEnd, payload: nil}
 	return end.Store(w)
 }
 
@@ -181,7 +180,7 @@ func (p LongArray) store(w io.Writer) error {
 }
 
 // StoreCompressed writes n to w, compressed via gzip.
-func StoreCompressed(w io.Writer, n NBT) error {
+func StoreCompressed(w io.Writer, n Tag) error {
 	comp := gzip.NewWriter(w)
 	defer comp.Close()
 	return StoreUncompressed(comp, n)
@@ -189,12 +188,12 @@ func StoreCompressed(w io.Writer, n NBT) error {
 
 // StoreUncompressed writes n to w, not compressing it. This is not
 // usually useful except for debugging.
-func StoreUncompressed(w io.Writer, n NBT) error {
+func StoreUncompressed(w io.Writer, n Tag) error {
 	return n.Store(w)
 }
 
-// Store is just an alias for StoreCompressed, since the NBT spec
+// Store is just an alias for StoreCompressed, since the Tag spec
 // says everything is gzipped.
-func Store(w io.Writer, n NBT) error {
+func Store(w io.Writer, n Tag) error {
 	return StoreCompressed(w, n)
 }

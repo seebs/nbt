@@ -17,14 +17,26 @@ func ({{.}}) Type() Type { return Type{{.}} }
 // it is, and there is a payload, you get the results of a type-assertion
 // of payload to {{.}}, otherwise you get a zero-valued {{.}} and ok is
 // false.
-func (n NBT) Get{{.}}() (out {{.}}, ok bool) {
-	if n.Type != Type{{.}} {
+func (t Tag) Get{{.}}() (out {{.}}, ok bool) {
+	if t.Type != Type{{.}} {
 		return out, false
 	}
-	if n.payload == nil {
+	if t.payload == nil {
 		return out, false
 	}
-	out, ok = n.payload.({{.}})
+	out, ok = t.payload.({{.}})
+	return out, ok
+}
+
+// Get{{.}} performs a type-assertion that n is of type Type{{.}}. If
+// it is, and there is a payload, you get the results of a type-assertion
+// of payload to {{.}}, otherwise you get a zero-valued {{.}} and ok is
+// false.
+func Get{{.}}(p Payload) (out {{.}}, ok bool) {
+	if p.Type() != Type{{.}} {
+		return out, false
+	}
+	out, ok = p.({{.}})
 	return out, ok
 }
 
@@ -39,8 +51,15 @@ func (l List) Get{{.}}List() (out []{{.}}, ok bool) {
 }
 
 {{else}}{{/* End is a special case; nothing to type-assert. */ -}}
-func (n NBT) GetEnd() (out End, ok bool) {
-	if n.Type != TypeEnd {
+func (t Tag) GetEnd() (out End, ok bool) {
+	if t.Type != TypeEnd {
+		return out, false
+	}
+	return out, true
+}
+
+func GetEnd(p Payload) (out End, ok bool) {
+	if p.Type() != TypeEnd {
 		return out, false
 	}
 	return out, true

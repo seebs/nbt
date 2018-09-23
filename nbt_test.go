@@ -2,14 +2,38 @@ package nbt
 
 import (
 	"bytes"
+	"io"
+	"io/ioutil"
 	"testing"
 )
 
+func TestSampleData(t *testing.T) {
+	bigtest, err := ioutil.ReadFile("examples/bigtest.nbt")
+	if err != nil {
+		t.Fatalf("couldn't open bigtest.nbt: %s", err)
+	}
+	t.Run("load", func(t *testing.T) { DoTestLoad(t, bytes.NewBuffer(bigtest)) })
+}
+
+func DoTestLoad(t *testing.T, r io.Reader) {
+	tag, err := Load(r)
+	if err != nil {
+		t.Fatalf("couldn't read sample data: %s", err)
+	}
+	if tag.Name != "Level" {
+		t.Fatalf("top level tag named '%q', not 'Level'.", tag.Name)
+	}
+	_, ok := tag.GetCompound()
+	if !ok {
+		t.Fatalf("sample data did not give a compound: %v", tag.Type)
+	}
+}
+
 func TestRoundTrip(t *testing.T) {
 	c := make(Compound)
-	c["foo"] = NBT{payload: String("bar"), Type: TypeString, Name: "foo"}
+	c["foo"] = String("bar")
 	buf := &bytes.Buffer{}
-	n := NBT{Type: TypeCompound, Name: "top", payload: c}
+	n := Named("top", c)
 	// store x into buf
 	err := Store(buf, n)
 	// fmt.Printf("buf: % x", buf)
@@ -32,7 +56,7 @@ func TestRoundTrip(t *testing.T) {
 	if !ok {
 		t.Logf("no 'foo' in compound")
 	}
-	str, ok := foo.GetString()
+	str, ok := GetString(foo)
 	if !ok {
 		t.Logf("'foo' is not a string")
 	}
