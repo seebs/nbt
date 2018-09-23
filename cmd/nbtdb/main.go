@@ -25,11 +25,11 @@ func main() {
 			fmt.Printf("open: fatal: %s\n", err)
 			os.Exit(1)
 		}
-		n, err := load(f)
+		t, err := load(f)
 		if err != nil {
 			fmt.Printf("load: fatal: %s\n", err)
 			os.Exit(1)
 		}
-		n.PrintIndented(os.Stdout)
+		t.PrintIndented(os.Stdout)
 	}
 }
