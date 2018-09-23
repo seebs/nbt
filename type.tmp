@@ -50,6 +50,13 @@ func (l List) Get{{.}}List() (out []{{.}}, ok bool) {
 	return out, ok
 }
 
+// Make{{.}}List creates a list of the appropriate type of payload.
+func Make{{.}}List(in []{{.}}) (l List) {
+	l.Contents = Type{{.}}
+	l.data = in
+	return l
+}
+
 {{else}}{{/* End is a special case; nothing to type-assert. */ -}}
 func (t Tag) GetEnd() (out End, ok bool) {
 	if t.Type != TypeEnd {
@@ -92,7 +99,7 @@ func (l List) storeData(w io.Writer) (err error) {
 
 // loadData loads the "raw" data array, which we'll later use to build
 // the interface array.
-func (l List) loadData(r io.Reader, count int) (err error) {
+func (l *List) loadData(r io.Reader, count int) (err error) {
 	switch l.Contents {
 {{range . -}}
 {{if ne . "End"}}
@@ -157,5 +164,27 @@ func (l List) Length() int {
 {{- end}}
 	default:
 	 	return 0
+	}
+}
+
+// MakeList makes a list given a slice of any kind of payload object. Note,
+// not a slice of Payloads, a slice of any of the specific concrete types
+// implement Payload and aren't End.
+func MakeList(in interface{}) (l List, err error) {
+	switch in.(type) {
+{{range .}}
+	case []{{.}}:
+{{- if ne . "End" }}
+		l.Contents = Type{{.}}
+		l.data = in
+{{- else}}
+		// We don't allow non-empty lists of Ends
+		l.Contents = TypeEnd
+		l.data = nil
+{{- end}}
+		return l, err
+{{- end}}
+	default:
+		return l, fmt.Errorf("can't MakeList on %T", in)
 	}
 }

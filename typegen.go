@@ -66,6 +66,13 @@ func (l List) GetByteList() (out []Byte, ok bool) {
 	return out, ok
 }
 
+// MakeByteList creates a list of the appropriate type of payload.
+func MakeByteList(in []Byte) (l List) {
+	l.Contents = TypeByte
+	l.data = in
+	return l
+}
+
 
 // Short represents the NBT type TAG_Short
 // Type() tells you that Short represents TypeShort.
@@ -106,6 +113,13 @@ func (l List) GetShortList() (out []Short, ok bool) {
 	}
 	out, ok = l.data.([]Short)
 	return out, ok
+}
+
+// MakeShortList creates a list of the appropriate type of payload.
+func MakeShortList(in []Short) (l List) {
+	l.Contents = TypeShort
+	l.data = in
+	return l
 }
 
 
@@ -150,6 +164,13 @@ func (l List) GetIntList() (out []Int, ok bool) {
 	return out, ok
 }
 
+// MakeIntList creates a list of the appropriate type of payload.
+func MakeIntList(in []Int) (l List) {
+	l.Contents = TypeInt
+	l.data = in
+	return l
+}
+
 
 // Long represents the NBT type TAG_Long
 // Type() tells you that Long represents TypeLong.
@@ -190,6 +211,13 @@ func (l List) GetLongList() (out []Long, ok bool) {
 	}
 	out, ok = l.data.([]Long)
 	return out, ok
+}
+
+// MakeLongList creates a list of the appropriate type of payload.
+func MakeLongList(in []Long) (l List) {
+	l.Contents = TypeLong
+	l.data = in
+	return l
 }
 
 
@@ -234,6 +262,13 @@ func (l List) GetFloatList() (out []Float, ok bool) {
 	return out, ok
 }
 
+// MakeFloatList creates a list of the appropriate type of payload.
+func MakeFloatList(in []Float) (l List) {
+	l.Contents = TypeFloat
+	l.data = in
+	return l
+}
+
 
 // Double represents the NBT type TAG_Double
 // Type() tells you that Double represents TypeDouble.
@@ -274,6 +309,13 @@ func (l List) GetDoubleList() (out []Double, ok bool) {
 	}
 	out, ok = l.data.([]Double)
 	return out, ok
+}
+
+// MakeDoubleList creates a list of the appropriate type of payload.
+func MakeDoubleList(in []Double) (l List) {
+	l.Contents = TypeDouble
+	l.data = in
+	return l
 }
 
 
@@ -318,6 +360,13 @@ func (l List) GetByteArrayList() (out []ByteArray, ok bool) {
 	return out, ok
 }
 
+// MakeByteArrayList creates a list of the appropriate type of payload.
+func MakeByteArrayList(in []ByteArray) (l List) {
+	l.Contents = TypeByteArray
+	l.data = in
+	return l
+}
+
 
 // String represents the NBT type TAG_String
 // Type() tells you that String represents TypeString.
@@ -358,6 +407,13 @@ func (l List) GetStringList() (out []String, ok bool) {
 	}
 	out, ok = l.data.([]String)
 	return out, ok
+}
+
+// MakeStringList creates a list of the appropriate type of payload.
+func MakeStringList(in []String) (l List) {
+	l.Contents = TypeString
+	l.data = in
+	return l
 }
 
 
@@ -402,6 +458,13 @@ func (l List) GetListList() (out []List, ok bool) {
 	return out, ok
 }
 
+// MakeListList creates a list of the appropriate type of payload.
+func MakeListList(in []List) (l List) {
+	l.Contents = TypeList
+	l.data = in
+	return l
+}
+
 
 // Compound represents the NBT type TAG_Compound
 // Type() tells you that Compound represents TypeCompound.
@@ -442,6 +505,13 @@ func (l List) GetCompoundList() (out []Compound, ok bool) {
 	}
 	out, ok = l.data.([]Compound)
 	return out, ok
+}
+
+// MakeCompoundList creates a list of the appropriate type of payload.
+func MakeCompoundList(in []Compound) (l List) {
+	l.Contents = TypeCompound
+	l.data = in
+	return l
 }
 
 
@@ -486,6 +556,13 @@ func (l List) GetIntArrayList() (out []IntArray, ok bool) {
 	return out, ok
 }
 
+// MakeIntArrayList creates a list of the appropriate type of payload.
+func MakeIntArrayList(in []IntArray) (l List) {
+	l.Contents = TypeIntArray
+	l.data = in
+	return l
+}
+
 
 // LongArray represents the NBT type TAG_LongArray
 // Type() tells you that LongArray represents TypeLongArray.
@@ -526,6 +603,13 @@ func (l List) GetLongArrayList() (out []LongArray, ok bool) {
 	}
 	out, ok = l.data.([]LongArray)
 	return out, ok
+}
+
+// MakeLongArrayList creates a list of the appropriate type of payload.
+func MakeLongArrayList(in []LongArray) (l List) {
+	l.Contents = TypeLongArray
+	l.data = in
+	return l
 }
 
 
@@ -653,7 +737,7 @@ func (l List) storeData(w io.Writer) (err error) {
 
 // loadData loads the "raw" data array, which we'll later use to build
 // the interface array.
-func (l List) loadData(r io.Reader, count int) (err error) {
+func (l *List) loadData(r io.Reader, count int) (err error) {
 	switch l.Contents {
 
 	case TypeEnd: // nothing to load
@@ -997,5 +1081,69 @@ func (l List) Length() int {
 
 	default:
 	 	return 0
+	}
+}
+
+// MakeList makes a list given a slice of any kind of payload object. Note,
+// not a slice of Payloads, a slice of any of the specific concrete types
+// implement Payload and aren't End.
+func MakeList(in interface{}) (l List, err error) {
+	switch in.(type) {
+
+	case []End:
+		// We don't allow non-empty lists of Ends
+		l.Contents = TypeEnd
+		l.data = nil
+		return l, err
+	case []Byte:
+		l.Contents = TypeByte
+		l.data = in
+		return l, err
+	case []Short:
+		l.Contents = TypeShort
+		l.data = in
+		return l, err
+	case []Int:
+		l.Contents = TypeInt
+		l.data = in
+		return l, err
+	case []Long:
+		l.Contents = TypeLong
+		l.data = in
+		return l, err
+	case []Float:
+		l.Contents = TypeFloat
+		l.data = in
+		return l, err
+	case []Double:
+		l.Contents = TypeDouble
+		l.data = in
+		return l, err
+	case []ByteArray:
+		l.Contents = TypeByteArray
+		l.data = in
+		return l, err
+	case []String:
+		l.Contents = TypeString
+		l.data = in
+		return l, err
+	case []List:
+		l.Contents = TypeList
+		l.data = in
+		return l, err
+	case []Compound:
+		l.Contents = TypeCompound
+		l.data = in
+		return l, err
+	case []IntArray:
+		l.Contents = TypeIntArray
+		l.data = in
+		return l, err
+	case []LongArray:
+		l.Contents = TypeLongArray
+		l.data = in
+		return l, err
+	default:
+		return l, fmt.Errorf("can't MakeList on %T", in)
 	}
 }
