@@ -188,3 +188,22 @@ func MakeList(in interface{}) (l List, err error) {
 		return l, fmt.Errorf("can't MakeList on %T", in)
 	}
 }
+
+// Element gives the ith element of l.
+func (l List)Element(i int) (out Payload, ok bool) {
+	switch data := l.data.(type) {
+{{range .}}
+	case []{{.}}:
+{{- if ne . "End" }}
+		if i > 0 && i < len(data) {
+			return data[i], true
+		}
+		return nil, false
+{{- else}}
+		return End{}, false
+{{- end}}
+{{- end}}
+	default:
+		return nil, false
+	}
+}

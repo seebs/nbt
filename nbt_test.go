@@ -64,12 +64,20 @@ func TestRoundTrip(t *testing.T) {
 	if !ok {
 		t.Logf("no 'foo' in compound")
 	}
-	str, ok := GetString(foo)
+	bar, ok := y.Element("foo")
+	if !ok {
+		t.Logf("no 'foo' in compound using Element")
+	}
+	s1, ok := GetString(foo)
 	if !ok {
 		t.Logf("'foo' is not a string")
 	}
-	if str != String("bar") {
-		t.Logf("'%s' != '%s'", str, "bar")
+	s2, ok := bar.GetString()
+	if s1 != String("bar") {
+		t.Logf("s1: '%s' != '%s'", s1, "bar")
+	}
+	if s2 != String("bar") {
+		t.Logf("s2: '%s' != '%s'", s2, "bar")
 	}
 	list, ok := GetList(c2["list"])
 	if !ok {

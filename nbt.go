@@ -169,23 +169,77 @@ func printIndented(w io.Writer, p Payload, prefix interface{}, indent int) {
 	}
 }
 
-func (n Tag) Length() int {
-	switch n.Type {
+func (t Tag) Length() int {
+	switch t.Type {
 	case TypeByteArray:
-		return len(n.payload.(ByteArray))
+		return len(t.payload.(ByteArray))
 	case TypeIntArray:
-		return len(n.payload.(IntArray))
+		return len(t.payload.(IntArray))
 	case TypeLongArray:
-		return len(n.payload.(LongArray))
+		return len(t.payload.(LongArray))
 	case TypeCompound:
-		return len(n.payload.(Compound))
+		return len(t.payload.(Compound))
 	case TypeList:
-		x, ok := n.payload.(List)
+		x, ok := t.payload.(List)
 		if !ok {
-			fmt.Printf("TypeList with nil payload [%s]", n.Name)
+			fmt.Printf("TypeList with nil payload [%s]", t.Name)
 			return 0
 		}
 		return x.Length()
 	}
 	return 0
+}
+
+// Element obtains the element t[idx], where idx is a string for a
+// Compound element, or an int for Array or List types.
+func (t Tag) Element(idx interface{}) (out Tag, ok bool) {
+	switch t.Type {
+	case TypeCompound:
+		sidx, ok := idx.(string)
+		if !ok {
+			return Tag{}, false
+		}
+		pay, ok := t.payload.(Compound)[sidx]
+		return Tag{Type: pay.Type(), Name: sidx, payload: pay}, ok
+	case TypeList:
+		l := t.payload.(List)
+		idx, ok := idx.(int)
+		if !ok {
+			return Tag{}, false
+		}
+		data, ok := l.Element(idx)
+		return Tag{Type: l.Contents, payload: data}, ok
+	case TypeByteArray:
+		idx, ok := idx.(int)
+		if !ok {
+			return Tag{}, false
+		}
+		a := t.payload.(ByteArray)
+		if idx >= 0 && idx < len(a) {
+			return Tag{Type: TypeByte, payload: Byte(a[idx])}, true
+		}
+		return Tag{}, false
+	case TypeIntArray:
+		idx, ok := idx.(int)
+		if !ok {
+			return Tag{}, false
+		}
+		a := t.payload.(IntArray)
+		if idx >= 0 && idx < len(a) {
+			return Tag{Type: TypeInt, payload: a[idx]}, true
+		}
+		return Tag{}, false
+	case TypeLongArray:
+		idx, ok := idx.(int)
+		if !ok {
+			return Tag{}, false
+		}
+		a := t.payload.(LongArray)
+		if idx >= 0 && idx < len(a) {
+			return Tag{Type: TypeLong, payload: a[idx]}, true
+		}
+		return Tag{}, false
+	default:
+		return Tag{}, false
+	}
 }

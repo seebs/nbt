@@ -1147,3 +1147,74 @@ func MakeList(in interface{}) (l List, err error) {
 		return l, fmt.Errorf("can't MakeList on %T", in)
 	}
 }
+
+// Element gives the ith element of l.
+func (l List)Element(i int) (out Payload, ok bool) {
+	switch data := l.data.(type) {
+
+	case []End:
+		return End{}, false
+	case []Byte:
+		if i > 0 && i < len(data) {
+			return data[i], true
+		}
+		return nil, false
+	case []Short:
+		if i > 0 && i < len(data) {
+			return data[i], true
+		}
+		return nil, false
+	case []Int:
+		if i > 0 && i < len(data) {
+			return data[i], true
+		}
+		return nil, false
+	case []Long:
+		if i > 0 && i < len(data) {
+			return data[i], true
+		}
+		return nil, false
+	case []Float:
+		if i > 0 && i < len(data) {
+			return data[i], true
+		}
+		return nil, false
+	case []Double:
+		if i > 0 && i < len(data) {
+			return data[i], true
+		}
+		return nil, false
+	case []ByteArray:
+		if i > 0 && i < len(data) {
+			return data[i], true
+		}
+		return nil, false
+	case []String:
+		if i > 0 && i < len(data) {
+			return data[i], true
+		}
+		return nil, false
+	case []List:
+		if i > 0 && i < len(data) {
+			return data[i], true
+		}
+		return nil, false
+	case []Compound:
+		if i > 0 && i < len(data) {
+			return data[i], true
+		}
+		return nil, false
+	case []IntArray:
+		if i > 0 && i < len(data) {
+			return data[i], true
+		}
+		return nil, false
+	case []LongArray:
+		if i > 0 && i < len(data) {
+			return data[i], true
+		}
+		return nil, false
+	default:
+		return nil, false
+	}
+}
