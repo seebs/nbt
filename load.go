@@ -175,7 +175,7 @@ func LoadList(r io.Reader) (l List, e error) {
 // LoadCompound loads a Compound tag, thus, loads other tags until it gets
 // a TypeEnd.
 func LoadCompound(r io.Reader) (c Compound, e error) {
-	c = make(map[string]Payload)
+	c = make(map[String]Payload)
 	var t Tag
 	var err error
 	var errored error // an error we handle after the fact
@@ -223,7 +223,7 @@ func LoadUncompressed(r io.Reader) (Tag, error) {
 	if err != nil {
 		return t, err
 	}
-	t.Name = string(name)
+	t.Name = name
 	// fmt.Printf("load: %s [%v]\n", n.Name, n.Type)
 	switch t.Type {
 	case TypeByte:

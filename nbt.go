@@ -33,7 +33,7 @@ const (
 // Tag represents a single named tag. There is an internal representation
 // of contents; use the Get*() methods to obtain contents.
 type Tag struct {
-	Name    string
+	Name    String
 	Type    Type
 	payload Payload
 }
@@ -46,7 +46,7 @@ type Payload interface {
 
 // Named takes a payload (such as a Compound, or String) and
 // wraps it into a Tag object with the given name.
-func Named(name string, payload Payload) Tag {
+func Named(name String, payload Payload) Tag {
 	return Tag{Type: payload.Type(), Name: name, payload: payload}
 }
 
@@ -68,7 +68,7 @@ type List struct {
 	Contents Type
 	data     interface{}
 }
-type Compound map[string]Payload
+type Compound map[String]Payload
 type IntArray []Int
 type LongArray []Long
 
@@ -195,12 +195,21 @@ func (t Tag) Length() int {
 func (t Tag) Element(idx interface{}) (out Tag, ok bool) {
 	switch t.Type {
 	case TypeCompound:
-		sidx, ok := idx.(string)
+		sidx, ok := idx.(String)
 		if !ok {
-			return Tag{}, false
+			// allow plain Go strings
+			str, sok := idx.(string)
+			if !sok {
+				return Tag{}, false
+			}
+			sidx = String(str)
 		}
 		pay, ok := t.payload.(Compound)[sidx]
-		return Tag{Type: pay.Type(), Name: sidx, payload: pay}, ok
+		if ok {
+			return Tag{Type: pay.Type(), Name: sidx, payload: pay}, ok
+		} else {
+			return Tag{}, false
+		}
 	case TypeList:
 		l := t.payload.(List)
 		idx, ok := idx.(int)
@@ -241,5 +250,15 @@ func (t Tag) Element(idx interface{}) (out Tag, ok bool) {
 		return Tag{}, false
 	default:
 		return Tag{}, false
+	}
+}
+
+// HasElements indicates whether an item conceptually has sub-elements.
+func (t Tag) HasElements() bool {
+	switch t.Type {
+	case TypeCompound, TypeList, TypeByteArray, TypeIntArray, TypeLongArray:
+		return true
+	default:
+		return false
 	}
 }
