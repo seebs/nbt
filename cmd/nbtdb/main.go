@@ -32,76 +32,63 @@ func main() {
 			fmt.Printf("open: fatal: %s\n", err)
 			os.Exit(1)
 		}
-		t, err := load(f)
+		t, _, err := load(f)
 		if err != nil {
 			fmt.Printf("load: fatal: %s\n", err)
 			os.Exit(1)
 		}
-		editor(t)
+		editor := newEditor(t)
+		editor.run()
 	}
 }
 
-var tagStack []nbt.Tag
-
-func prompt() {
-	for _, p := range tagStack {
-		fmt.Printf("%q > ", p.Name)
-	}
-}
-
-func editor(t nbt.Tag) {
-	doEdit(t)
+type editor struct {
+	path nbt.Path
+	cmds map[string]handler
 }
 
 type handler func([]string) error
 
-var cmds = map[string]handler{
-	"ls": doLs,
+func newEditor(t nbt.Tag) *editor {
+	e := &editor{path: nbt.NewPath(t)}
+	e.cmds = make(map[string]handler)
+	e.cmds["ls"] = e.doLs
+	e.cmds["cd"] = e.doCd
+	return e
 }
 
-func doLs(args []string) error {
+func (e *editor) prompt() {
+	fmt.Printf("%v > ", e.path)
+}
+
+func (e *editor) doLs(args []string) error {
 	if len(args) == 0 {
-		listContents(tagStack[len(tagStack)-1])
+		listContents(e.path.Current())
 		return nil
 	}
 	return nil
 }
 
-func listContents(t nbt.Tag) {
-	switch t.Type {
-	case nbt.TypeList:
-		_, ok := t.GetList()
-		if !ok {
-			fmt.Printf("not a list\n")
-		}
-	case nbt.TypeCompound:
-		c, ok := t.GetCompound()
-		if !ok {
-			fmt.Printf("not a compound\n")
-		}
-		for k := range c {
-			fmt.Printf("%s\n", k)
-		}
-	default:
-		fmt.Printf("unlistable node %v", t.Type)
-	}
+func (e *editor) doCd(args []string) error {
+	_, err := e.path.Cd(nbt.String(args[0]))
+	return err
 }
 
-// doEdit runs the actual editing interface
-func doEdit(t nbt.Tag) {
-	// add tag to stack
-	tagStack = append(tagStack, t)
-	defer func() {
-		// and remove the tag when we're done
-		if len(tagStack) > 0 {
-			tagStack = tagStack[:len(tagStack)-1]
-		}
-	}()
+func (e *editor) input() (string, error) {
+	buf := make([]byte, 512)
+	n, err := os.Stdin.Read(buf)
+	if n != 0 {
+		return string(buf[0:n]), nil
+	}
+	return "", err
+}
+
+func (e *editor) run() {
 	// do editing
 	gotEOF := false
 	for {
-		prompt()
-		cmd, err := input()
+		e.prompt()
+		cmd, err := e.input()
 		if err == io.EOF {
 			gotEOF = true
 		} else if err != nil {
@@ -120,14 +107,14 @@ func doEdit(t nbt.Tag) {
 		if len(words) > 1 {
 			args = words[1:]
 		}
-		fmt.Printf("%s %v\n", cmd, args)
-		fn, ok := cmds[cmd]
+		fn, ok := e.cmds[cmd]
 		if ok {
 			err = fn(args)
 			if err != nil {
 				fmt.Printf("cmd failed: %s\n", err)
-				break
 			}
+		} else {
+			fmt.Printf("unknown cmd %q\n", cmd)
 		}
 		if gotEOF {
 			break
@@ -135,11 +122,15 @@ func doEdit(t nbt.Tag) {
 	}
 }
 
-func input() (string, error) {
-	buf := make([]byte, 512)
-	n, err := os.Stdin.Read(buf)
-	if n != 0 {
-		return string(buf[0:n]), nil
+func listContents(t nbt.Tag) {
+	switch tag := t.(type) {
+	case nbt.List:
+		tag.Iterate(func(i int, t nbt.Tag) error { fmt.Printf("%d\n", i); return nil })
+	case nbt.Compound:
+		for k := range tag {
+			fmt.Printf("%s\n", k)
+		}
+	default:
+		fmt.Printf("unlistable node %v\n", t.Type())
 	}
-	return "", err
 }
