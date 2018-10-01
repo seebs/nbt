@@ -11,15 +11,8 @@ import (
 // Type() tells you that End represents TypeEnd.
 func (End) Type() Type { return TypeEnd }
 
-func (t Tag) GetEnd() (out End, ok bool) {
-	if t.Type != TypeEnd {
-		return out, false
-	}
-	return out, true
-}
-
-func GetEnd(p Payload) (out End, ok bool) {
-	if p.Type() != TypeEnd {
+func GetEnd(t Tag) (out End, ok bool) {
+	if t.Type() != TypeEnd {
 		return out, false
 	}
 	return out, true
@@ -33,26 +26,11 @@ func (Byte) Type() Type { return TypeByte }
 // it is, and there is a payload, you get the results of a type-assertion
 // of payload to Byte, otherwise you get a zero-valued Byte and ok is
 // false.
-func (t Tag) GetByte() (out Byte, ok bool) {
-	if t.Type != TypeByte {
+func GetByte(t Tag) (out Byte, ok bool) {
+	if t.Type() != TypeByte {
 		return out, false
 	}
-	if t.payload == nil {
-		return out, false
-	}
-	out, ok = t.payload.(Byte)
-	return out, ok
-}
-
-// GetByte performs a type-assertion that n is of type TypeByte. If
-// it is, and there is a payload, you get the results of a type-assertion
-// of payload to Byte, otherwise you get a zero-valued Byte and ok is
-// false.
-func GetByte(p Payload) (out Byte, ok bool) {
-	if p.Type() != TypeByte {
-		return out, false
-	}
-	out, ok = p.(Byte)
+	out, ok = t.(Byte)
 	return out, ok
 }
 
@@ -82,26 +60,11 @@ func (Short) Type() Type { return TypeShort }
 // it is, and there is a payload, you get the results of a type-assertion
 // of payload to Short, otherwise you get a zero-valued Short and ok is
 // false.
-func (t Tag) GetShort() (out Short, ok bool) {
-	if t.Type != TypeShort {
+func GetShort(t Tag) (out Short, ok bool) {
+	if t.Type() != TypeShort {
 		return out, false
 	}
-	if t.payload == nil {
-		return out, false
-	}
-	out, ok = t.payload.(Short)
-	return out, ok
-}
-
-// GetShort performs a type-assertion that n is of type TypeShort. If
-// it is, and there is a payload, you get the results of a type-assertion
-// of payload to Short, otherwise you get a zero-valued Short and ok is
-// false.
-func GetShort(p Payload) (out Short, ok bool) {
-	if p.Type() != TypeShort {
-		return out, false
-	}
-	out, ok = p.(Short)
+	out, ok = t.(Short)
 	return out, ok
 }
 
@@ -131,26 +94,11 @@ func (Int) Type() Type { return TypeInt }
 // it is, and there is a payload, you get the results of a type-assertion
 // of payload to Int, otherwise you get a zero-valued Int and ok is
 // false.
-func (t Tag) GetInt() (out Int, ok bool) {
-	if t.Type != TypeInt {
+func GetInt(t Tag) (out Int, ok bool) {
+	if t.Type() != TypeInt {
 		return out, false
 	}
-	if t.payload == nil {
-		return out, false
-	}
-	out, ok = t.payload.(Int)
-	return out, ok
-}
-
-// GetInt performs a type-assertion that n is of type TypeInt. If
-// it is, and there is a payload, you get the results of a type-assertion
-// of payload to Int, otherwise you get a zero-valued Int and ok is
-// false.
-func GetInt(p Payload) (out Int, ok bool) {
-	if p.Type() != TypeInt {
-		return out, false
-	}
-	out, ok = p.(Int)
+	out, ok = t.(Int)
 	return out, ok
 }
 
@@ -180,26 +128,11 @@ func (Long) Type() Type { return TypeLong }
 // it is, and there is a payload, you get the results of a type-assertion
 // of payload to Long, otherwise you get a zero-valued Long and ok is
 // false.
-func (t Tag) GetLong() (out Long, ok bool) {
-	if t.Type != TypeLong {
+func GetLong(t Tag) (out Long, ok bool) {
+	if t.Type() != TypeLong {
 		return out, false
 	}
-	if t.payload == nil {
-		return out, false
-	}
-	out, ok = t.payload.(Long)
-	return out, ok
-}
-
-// GetLong performs a type-assertion that n is of type TypeLong. If
-// it is, and there is a payload, you get the results of a type-assertion
-// of payload to Long, otherwise you get a zero-valued Long and ok is
-// false.
-func GetLong(p Payload) (out Long, ok bool) {
-	if p.Type() != TypeLong {
-		return out, false
-	}
-	out, ok = p.(Long)
+	out, ok = t.(Long)
 	return out, ok
 }
 
@@ -229,26 +162,11 @@ func (Float) Type() Type { return TypeFloat }
 // it is, and there is a payload, you get the results of a type-assertion
 // of payload to Float, otherwise you get a zero-valued Float and ok is
 // false.
-func (t Tag) GetFloat() (out Float, ok bool) {
-	if t.Type != TypeFloat {
+func GetFloat(t Tag) (out Float, ok bool) {
+	if t.Type() != TypeFloat {
 		return out, false
 	}
-	if t.payload == nil {
-		return out, false
-	}
-	out, ok = t.payload.(Float)
-	return out, ok
-}
-
-// GetFloat performs a type-assertion that n is of type TypeFloat. If
-// it is, and there is a payload, you get the results of a type-assertion
-// of payload to Float, otherwise you get a zero-valued Float and ok is
-// false.
-func GetFloat(p Payload) (out Float, ok bool) {
-	if p.Type() != TypeFloat {
-		return out, false
-	}
-	out, ok = p.(Float)
+	out, ok = t.(Float)
 	return out, ok
 }
 
@@ -278,26 +196,11 @@ func (Double) Type() Type { return TypeDouble }
 // it is, and there is a payload, you get the results of a type-assertion
 // of payload to Double, otherwise you get a zero-valued Double and ok is
 // false.
-func (t Tag) GetDouble() (out Double, ok bool) {
-	if t.Type != TypeDouble {
+func GetDouble(t Tag) (out Double, ok bool) {
+	if t.Type() != TypeDouble {
 		return out, false
 	}
-	if t.payload == nil {
-		return out, false
-	}
-	out, ok = t.payload.(Double)
-	return out, ok
-}
-
-// GetDouble performs a type-assertion that n is of type TypeDouble. If
-// it is, and there is a payload, you get the results of a type-assertion
-// of payload to Double, otherwise you get a zero-valued Double and ok is
-// false.
-func GetDouble(p Payload) (out Double, ok bool) {
-	if p.Type() != TypeDouble {
-		return out, false
-	}
-	out, ok = p.(Double)
+	out, ok = t.(Double)
 	return out, ok
 }
 
@@ -327,26 +230,11 @@ func (ByteArray) Type() Type { return TypeByteArray }
 // it is, and there is a payload, you get the results of a type-assertion
 // of payload to ByteArray, otherwise you get a zero-valued ByteArray and ok is
 // false.
-func (t Tag) GetByteArray() (out ByteArray, ok bool) {
-	if t.Type != TypeByteArray {
+func GetByteArray(t Tag) (out ByteArray, ok bool) {
+	if t.Type() != TypeByteArray {
 		return out, false
 	}
-	if t.payload == nil {
-		return out, false
-	}
-	out, ok = t.payload.(ByteArray)
-	return out, ok
-}
-
-// GetByteArray performs a type-assertion that n is of type TypeByteArray. If
-// it is, and there is a payload, you get the results of a type-assertion
-// of payload to ByteArray, otherwise you get a zero-valued ByteArray and ok is
-// false.
-func GetByteArray(p Payload) (out ByteArray, ok bool) {
-	if p.Type() != TypeByteArray {
-		return out, false
-	}
-	out, ok = p.(ByteArray)
+	out, ok = t.(ByteArray)
 	return out, ok
 }
 
@@ -376,26 +264,11 @@ func (String) Type() Type { return TypeString }
 // it is, and there is a payload, you get the results of a type-assertion
 // of payload to String, otherwise you get a zero-valued String and ok is
 // false.
-func (t Tag) GetString() (out String, ok bool) {
-	if t.Type != TypeString {
+func GetString(t Tag) (out String, ok bool) {
+	if t.Type() != TypeString {
 		return out, false
 	}
-	if t.payload == nil {
-		return out, false
-	}
-	out, ok = t.payload.(String)
-	return out, ok
-}
-
-// GetString performs a type-assertion that n is of type TypeString. If
-// it is, and there is a payload, you get the results of a type-assertion
-// of payload to String, otherwise you get a zero-valued String and ok is
-// false.
-func GetString(p Payload) (out String, ok bool) {
-	if p.Type() != TypeString {
-		return out, false
-	}
-	out, ok = p.(String)
+	out, ok = t.(String)
 	return out, ok
 }
 
@@ -425,26 +298,11 @@ func (List) Type() Type { return TypeList }
 // it is, and there is a payload, you get the results of a type-assertion
 // of payload to List, otherwise you get a zero-valued List and ok is
 // false.
-func (t Tag) GetList() (out List, ok bool) {
-	if t.Type != TypeList {
+func GetList(t Tag) (out List, ok bool) {
+	if t.Type() != TypeList {
 		return out, false
 	}
-	if t.payload == nil {
-		return out, false
-	}
-	out, ok = t.payload.(List)
-	return out, ok
-}
-
-// GetList performs a type-assertion that n is of type TypeList. If
-// it is, and there is a payload, you get the results of a type-assertion
-// of payload to List, otherwise you get a zero-valued List and ok is
-// false.
-func GetList(p Payload) (out List, ok bool) {
-	if p.Type() != TypeList {
-		return out, false
-	}
-	out, ok = p.(List)
+	out, ok = t.(List)
 	return out, ok
 }
 
@@ -474,26 +332,11 @@ func (Compound) Type() Type { return TypeCompound }
 // it is, and there is a payload, you get the results of a type-assertion
 // of payload to Compound, otherwise you get a zero-valued Compound and ok is
 // false.
-func (t Tag) GetCompound() (out Compound, ok bool) {
-	if t.Type != TypeCompound {
+func GetCompound(t Tag) (out Compound, ok bool) {
+	if t.Type() != TypeCompound {
 		return out, false
 	}
-	if t.payload == nil {
-		return out, false
-	}
-	out, ok = t.payload.(Compound)
-	return out, ok
-}
-
-// GetCompound performs a type-assertion that n is of type TypeCompound. If
-// it is, and there is a payload, you get the results of a type-assertion
-// of payload to Compound, otherwise you get a zero-valued Compound and ok is
-// false.
-func GetCompound(p Payload) (out Compound, ok bool) {
-	if p.Type() != TypeCompound {
-		return out, false
-	}
-	out, ok = p.(Compound)
+	out, ok = t.(Compound)
 	return out, ok
 }
 
@@ -523,26 +366,11 @@ func (IntArray) Type() Type { return TypeIntArray }
 // it is, and there is a payload, you get the results of a type-assertion
 // of payload to IntArray, otherwise you get a zero-valued IntArray and ok is
 // false.
-func (t Tag) GetIntArray() (out IntArray, ok bool) {
-	if t.Type != TypeIntArray {
+func GetIntArray(t Tag) (out IntArray, ok bool) {
+	if t.Type() != TypeIntArray {
 		return out, false
 	}
-	if t.payload == nil {
-		return out, false
-	}
-	out, ok = t.payload.(IntArray)
-	return out, ok
-}
-
-// GetIntArray performs a type-assertion that n is of type TypeIntArray. If
-// it is, and there is a payload, you get the results of a type-assertion
-// of payload to IntArray, otherwise you get a zero-valued IntArray and ok is
-// false.
-func GetIntArray(p Payload) (out IntArray, ok bool) {
-	if p.Type() != TypeIntArray {
-		return out, false
-	}
-	out, ok = p.(IntArray)
+	out, ok = t.(IntArray)
 	return out, ok
 }
 
@@ -572,26 +400,11 @@ func (LongArray) Type() Type { return TypeLongArray }
 // it is, and there is a payload, you get the results of a type-assertion
 // of payload to LongArray, otherwise you get a zero-valued LongArray and ok is
 // false.
-func (t Tag) GetLongArray() (out LongArray, ok bool) {
-	if t.Type != TypeLongArray {
+func GetLongArray(t Tag) (out LongArray, ok bool) {
+	if t.Type() != TypeLongArray {
 		return out, false
 	}
-	if t.payload == nil {
-		return out, false
-	}
-	out, ok = t.payload.(LongArray)
-	return out, ok
-}
-
-// GetLongArray performs a type-assertion that n is of type TypeLongArray. If
-// it is, and there is a payload, you get the results of a type-assertion
-// of payload to LongArray, otherwise you get a zero-valued LongArray and ok is
-// false.
-func GetLongArray(p Payload) (out LongArray, ok bool) {
-	if p.Type() != TypeLongArray {
-		return out, false
-	}
-	out, ok = p.(LongArray)
+	out, ok = t.(LongArray)
 	return out, ok
 }
 
@@ -896,7 +709,7 @@ func (l *List) loadData(r io.Reader, count int) (err error) {
 // Iterate iterates over the list, passing each item in the list (as a Payload)
 // to the given function. If fn returns a non-nil error, Iterate stops and returns
 // the error.
-func (l List) Iterate(fn func(int, Payload) error) (err error) {
+func (l List) Iterate(fn func(int, Tag) error) (err error) {
 	switch raw := l.data.(type) {
 
 	case []End:
@@ -1085,8 +898,8 @@ func (l List) Length() int {
 }
 
 // MakeList makes a list given a slice of any kind of payload object. Note,
-// not a slice of Payloads, a slice of any of the specific concrete types
-// implement Payload and aren't End.
+// not a slice of Tags, a slice of any of the specific concrete types
+// implement tag and aren't End.
 func MakeList(in interface{}) (l List, err error) {
 	switch in.(type) {
 
@@ -1149,7 +962,7 @@ func MakeList(in interface{}) (l List, err error) {
 }
 
 // Element gives the ith element of l.
-func (l List)Element(i int) (out Payload, ok bool) {
+func (l List)Element(i int) (out Tag, ok bool) {
 	switch data := l.data.(type) {
 
 	case []End:

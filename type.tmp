@@ -17,26 +17,11 @@ func ({{.}}) Type() Type { return Type{{.}} }
 // it is, and there is a payload, you get the results of a type-assertion
 // of payload to {{.}}, otherwise you get a zero-valued {{.}} and ok is
 // false.
-func (t Tag) Get{{.}}() (out {{.}}, ok bool) {
-	if t.Type != Type{{.}} {
+func Get{{.}}(t Tag) (out {{.}}, ok bool) {
+	if t.Type() != Type{{.}} {
 		return out, false
 	}
-	if t.payload == nil {
-		return out, false
-	}
-	out, ok = t.payload.({{.}})
-	return out, ok
-}
-
-// Get{{.}} performs a type-assertion that n is of type Type{{.}}. If
-// it is, and there is a payload, you get the results of a type-assertion
-// of payload to {{.}}, otherwise you get a zero-valued {{.}} and ok is
-// false.
-func Get{{.}}(p Payload) (out {{.}}, ok bool) {
-	if p.Type() != Type{{.}} {
-		return out, false
-	}
-	out, ok = p.({{.}})
+	out, ok = t.({{.}})
 	return out, ok
 }
 
@@ -58,15 +43,8 @@ func Make{{.}}List(in []{{.}}) (l List) {
 }
 
 {{else}}{{/* End is a special case; nothing to type-assert. */ -}}
-func (t Tag) GetEnd() (out End, ok bool) {
-	if t.Type != TypeEnd {
-		return out, false
-	}
-	return out, true
-}
-
-func GetEnd(p Payload) (out End, ok bool) {
-	if p.Type() != TypeEnd {
+func GetEnd(t Tag) (out End, ok bool) {
+	if t.Type() != TypeEnd {
 		return out, false
 	}
 	return out, true
@@ -128,7 +106,7 @@ func (l *List) loadData(r io.Reader, count int) (err error) {
 // Iterate iterates over the list, passing each item in the list (as a Payload)
 // to the given function. If fn returns a non-nil error, Iterate stops and returns
 // the error.
-func (l List) Iterate(fn func(int, Payload) error) (err error) {
+func (l List) Iterate(fn func(int, Tag) error) (err error) {
 	switch raw := l.data.(type) {
 {{range .}}
 	case []{{.}}:
@@ -168,8 +146,8 @@ func (l List) Length() int {
 }
 
 // MakeList makes a list given a slice of any kind of payload object. Note,
-// not a slice of Payloads, a slice of any of the specific concrete types
-// implement Payload and aren't End.
+// not a slice of Tags, a slice of any of the specific concrete types
+// implement tag and aren't End.
 func MakeList(in interface{}) (l List, err error) {
 	switch in.(type) {
 {{range .}}
@@ -190,7 +168,7 @@ func MakeList(in interface{}) (l List, err error) {
 }
 
 // Element gives the ith element of l.
-func (l List)Element(i int) (out Payload, ok bool) {
+func (l List)Element(i int) (out Tag, ok bool) {
 	switch data := l.data.(type) {
 {{range .}}
 	case []{{.}}:

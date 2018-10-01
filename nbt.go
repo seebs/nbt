@@ -7,6 +7,7 @@ package nbt
 import (
 	"fmt"
 	"io"
+	"strconv"
 )
 
 // Type represents the types of tags available.
@@ -30,27 +31,14 @@ const (
 	TypeMax
 )
 
-// Tag represents a single named tag. There is an internal representation
-// of contents; use the Get*() methods to obtain contents.
-type Tag struct {
-	Name    String
-	Type    Type
-	payload Payload
-}
-
-// A Payload represents the payload associated with a named tag.
-type Payload interface {
+// A Tag is one of several concrete types which represent NBT "payloads",
+// because it turns out that's the correct conceptual entity to think of
+// as a "tag".
+type Tag interface {
 	Type() Type
 	store(w io.Writer) error
 }
 
-// Named takes a payload (such as a Compound, or String) and
-// wraps it into a Tag object with the given name.
-func Named(name String, payload Payload) Tag {
-	return Tag{Type: payload.Type(), Name: name, payload: payload}
-}
-
-// End doesn't even have a name, let alone contents.
 type End struct{}
 type Byte int8
 type Short int16
@@ -68,57 +56,90 @@ type List struct {
 	Contents Type
 	data     interface{}
 }
-type Compound map[String]Payload
+type Compound map[String]Tag
 type IntArray []Int
 type LongArray []Long
 
 // You never actually have to make an End to put in a List Of End objects,
 // so we check the interface thing here for consistency.
-var _ Payload = End{}
+var _ Tag = End{}
 
-func (n Tag) String() string {
-	switch n.Type {
-	default:
-		return fmt.Sprintf("[unknown tag %v]", n.Type)
-	case TypeEnd:
-		return ""
-	case TypeByte:
-		x, _ := n.GetByte()
-		return fmt.Sprintf("%q", x)
-	case TypeShort:
-		x, _ := n.GetShort()
-		return fmt.Sprintf("%d", x)
-	case TypeInt:
-		x, _ := n.GetInt()
-		return fmt.Sprintf("%d", x)
-	case TypeLong:
-		x, _ := n.GetLong()
-		return fmt.Sprintf("%d", x)
-	case TypeFloat:
-		x, _ := n.GetFloat()
-		return fmt.Sprintf("%f", x)
-	case TypeDouble:
-		x, _ := n.GetDouble()
-		return fmt.Sprintf("%f", x)
-	case TypeString:
-		x, _ := n.GetString()
-		return fmt.Sprintf("%s", x)
-	case TypeList:
-		x, _ := n.GetList()
-		return fmt.Sprintf("list[%d elements] of %v", x.Length(), x.Contents)
-	case TypeByteArray, TypeIntArray, TypeLongArray, TypeCompound:
-		return fmt.Sprintf("%v [%d elements]", n.Type, n.Length())
-	}
+// String() makes End objects printable.
+func (x End) String() string {
+	return ""
+}
+
+// String() makes Byte objects printable.
+func (x Byte) String() string {
+	return fmt.Sprintf("%q", byte(x))
+}
+
+// String() makes Short objects printable.
+func (x Short) String() string {
+	return strconv.FormatInt(int64(x), 10)
+}
+
+// String() makes Int objects printable.
+func (x Int) String() string {
+	return strconv.FormatInt(int64(x), 10)
+}
+
+// String() makes Long objects printable.
+func (x Long) String() string {
+	return strconv.FormatInt(int64(x), 10)
+}
+
+// String() makes Float objects printable.
+func (x Float) String() string {
+	return strconv.FormatFloat(float64(x), 'f', -1, 32)
+}
+
+// String() makes Double objects printable.
+func (x Double) String() string {
+	return strconv.FormatFloat(float64(x), 'f', -1, 64)
+}
+
+// String() makes ByteArray objects printable.
+func (x ByteArray) String() string {
+	return fmt.Sprintf("%v [%d elements]", x.Type(), len(x))
+}
+
+// String() makes String objects printable.
+func (x String) String() string {
+	return string(x)
+}
+
+// String() makes List objects printable.
+func (x List) String() string {
+	return fmt.Sprintf("list[%d elements] of %v", x.Length(), x.Contents)
+}
+
+// String() makes Compound objects printable.
+func (x Compound) String() string {
+	return fmt.Sprintf("%v [%d elements]", x.Type(), len(x))
+}
+
+// String() makes IntArray objects printable.
+func (x IntArray) String() string {
+	return fmt.Sprintf("%v [%d elements]", x.Type(), len(x))
+}
+
+// String() makes LongArray objects printable.
+func (x LongArray) String() string {
+	return fmt.Sprintf("%v [%d elements]", x.Type(), len(x))
 }
 
 // PrintIndented pretty-prints the given Tag.
-func (n Tag) PrintIndented(w io.Writer) {
-	printIndented(w, n.payload, n.Name, 0)
+func PrintIndented(w io.Writer, t Tag) {
+	printIndented(w, t, nil, 0)
 }
 
-func printIndented(w io.Writer, p Payload, prefix interface{}, indent int) {
+// printIndented tries to print the given tag,
+func printIndented(w io.Writer, p Tag, prefix interface{}, indent int) {
 	fmt.Fprintf(w, "%*s", indent*2, "")
 	switch v := prefix.(type) {
+	case nil:
+		// do nothing with a nil prefix
 	case string:
 		fmt.Fprintf(w, "%s: ", v)
 	case int:
@@ -157,7 +178,7 @@ func printIndented(w io.Writer, p Payload, prefix interface{}, indent int) {
 		fmt.Fprintf(w, "[%d %v list] {", length, x.Contents)
 		if length != 0 {
 			fmt.Fprintf(w, "\n")
-			x.Iterate(func(i int, p Payload) error { printIndented(w, p, i, indent+1); return nil })
+			x.Iterate(func(i int, t Tag) error { printIndented(w, p, i, indent+1); return nil })
 		}
 		fmt.Fprintf(w, "%*s}", indent*2, "")
 	case Compound:
@@ -169,93 +190,83 @@ func printIndented(w io.Writer, p Payload, prefix interface{}, indent int) {
 	}
 }
 
-func (t Tag) Length() int {
-	switch t.Type {
-	case TypeByteArray:
-		return len(t.payload.(ByteArray))
-	case TypeIntArray:
-		return len(t.payload.(IntArray))
-	case TypeLongArray:
-		return len(t.payload.(LongArray))
-	case TypeCompound:
-		return len(t.payload.(Compound))
-	case TypeList:
-		x, ok := t.payload.(List)
-		if !ok {
-			fmt.Printf("TypeList with nil payload [%s]", t.Name)
-			return 0
-		}
-		return x.Length()
+func TagLength(t Tag) int {
+	switch tag := t.(type) {
+	case ByteArray:
+		return len(tag)
+	case IntArray:
+		return len(tag)
+	case LongArray:
+		return len(tag)
+	case Compound:
+		return len(tag)
+	case List:
+		return tag.Length()
 	}
 	return 0
 }
 
 // Element obtains the element t[idx], where idx is a string for a
 // Compound element, or an int for Array or List types.
-func (t Tag) Element(idx interface{}) (out Tag, ok bool) {
-	switch t.Type {
-	case TypeCompound:
+func TagElement(t Tag, idx interface{}) (out Tag, ok bool) {
+	if t == nil {
+		return nil, false
+	}
+	switch tag := t.(type) {
+	case Compound:
 		sidx, ok := idx.(String)
 		if !ok {
 			// allow plain Go strings
 			str, sok := idx.(string)
 			if !sok {
-				return Tag{}, false
+				return nil, false
 			}
 			sidx = String(str)
 		}
-		pay, ok := t.payload.(Compound)[sidx]
-		if ok {
-			return Tag{Type: pay.Type(), Name: sidx, payload: pay}, ok
-		} else {
-			return Tag{}, false
-		}
-	case TypeList:
-		l := t.payload.(List)
+		pay, ok := tag[sidx]
+		return pay, ok
+	case List:
 		idx, ok := idx.(int)
 		if !ok {
-			return Tag{}, false
+			return nil, false
 		}
-		data, ok := l.Element(idx)
-		return Tag{Type: l.Contents, payload: data}, ok
-	case TypeByteArray:
+		data, ok := tag.Element(idx)
+		return data, ok
+	case ByteArray:
 		idx, ok := idx.(int)
 		if !ok {
-			return Tag{}, false
+			return nil, false
 		}
-		a := t.payload.(ByteArray)
-		if idx >= 0 && idx < len(a) {
-			return Tag{Type: TypeByte, payload: Byte(a[idx])}, true
+		if idx >= 0 && idx < len(tag) {
+			return Byte(tag[idx]), true
 		}
-		return Tag{}, false
-	case TypeIntArray:
+		return nil, false
+	case IntArray:
 		idx, ok := idx.(int)
 		if !ok {
-			return Tag{}, false
+			return nil, false
 		}
-		a := t.payload.(IntArray)
-		if idx >= 0 && idx < len(a) {
-			return Tag{Type: TypeInt, payload: a[idx]}, true
+		if idx >= 0 && idx < len(tag) {
+			return tag[idx], true
 		}
-		return Tag{}, false
-	case TypeLongArray:
+		return nil, false
+	case LongArray:
 		idx, ok := idx.(int)
 		if !ok {
-			return Tag{}, false
+			return nil, false
 		}
-		a := t.payload.(LongArray)
-		if idx >= 0 && idx < len(a) {
-			return Tag{Type: TypeLong, payload: a[idx]}, true
+		if idx >= 0 && idx < len(tag) {
+			return tag[idx], true
 		}
-		return Tag{}, false
+		return nil, false
 	default:
-		return Tag{}, false
+		return nil, false
 	}
 }
 
 // HasElements indicates whether an item conceptually has sub-elements.
-func (t Tag) HasElements() bool {
-	switch t.Type {
+func TagHasElements(t Tag) bool {
+	switch t.Type() {
 	case TypeCompound, TypeList, TypeByteArray, TypeIntArray, TypeLongArray:
 		return true
 	default:

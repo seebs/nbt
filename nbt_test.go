@@ -16,16 +16,16 @@ func TestSampleData(t *testing.T) {
 }
 
 func DoTestLoad(t *testing.T, r io.Reader) {
-	tag, err := Load(r)
+	tag, name, err := Load(r)
 	if err != nil {
 		t.Fatalf("couldn't read sample data: %s", err)
 	}
-	if tag.Name != "Level" {
-		t.Fatalf("top level tag named '%q', not 'Level'.", tag.Name)
+	if name != "Level" {
+		t.Fatalf("top level tag named '%q', not 'Level'.", name)
 	}
-	_, ok := tag.GetCompound()
+	_, ok := GetCompound(tag)
 	if !ok {
-		t.Fatalf("sample data did not give a compound: %v", tag.Type)
+		t.Fatalf("sample data did not give a compound: %v", tag.Type())
 	}
 }
 
@@ -41,30 +41,29 @@ func TestRoundTrip(t *testing.T) {
 		t.Fatalf("error trying to make []Int list: %s", err)
 	}
 	buf := &bytes.Buffer{}
-	n := Named("top", c)
-	// store x into buf
-	err = Store(buf, n)
+	// store c into buf
+	err = StoreTag(buf, c, "top")
 	// fmt.Printf("buf: % x", buf)
 	if err != nil {
 		t.Logf("unexpected store err: %s", err)
 		return
 	}
-	y, err := Load(buf)
+	y, name, err := Load(buf)
 	if err != nil {
 		t.Logf("unexpected load err: %s", err)
 	}
-	if y.Type != TypeCompound {
-		t.Logf("didn't get a string back: %v", y.Type)
+	if name != "top" {
+		t.Logf("wrong name, got '%q', wanted 'top'", name)
 	}
-	if y.payload == nil {
-		t.Logf("nil payload, can't convert that")
+	c2, ok := GetCompound(y)
+	if !ok {
+		t.Logf("didn't get a compound back: %v", y.Type())
 	}
-	c2 := y.payload.(Compound)
 	foo, ok := c2["foo"]
 	if !ok {
 		t.Logf("no 'foo' in compound")
 	}
-	bar, ok := y.Element("foo")
+	bar, ok := TagElement(y, "foo")
 	if !ok {
 		t.Logf("no 'foo' in compound using Element")
 	}
@@ -72,7 +71,7 @@ func TestRoundTrip(t *testing.T) {
 	if !ok {
 		t.Logf("'foo' is not a string")
 	}
-	s2, ok := bar.GetString()
+	s2, ok := GetString(bar)
 	if s1 != String("bar") {
 		t.Logf("s1: '%s' != '%s'", s1, "bar")
 	}

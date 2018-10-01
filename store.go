@@ -12,26 +12,26 @@ import (
 
 // Store stores `n` to the provided io.Writer. It does
 // not handle compression; for that, use the non-method Store.
-func (n Tag) Store(w io.Writer) error {
+func StoreTag(w io.Writer, t Tag, name String) error {
 	// TypeEnd doesn't get its name written.
-	if n.Type == TypeEnd {
+	if t.Type() == TypeEnd {
 		_, err := w.Write([]byte{0})
 		return err
 	}
-	l := len(n.Name)
+	l := len(name)
 	var b [3]byte
-	b[0] = byte(n.Type)
+	b[0] = byte(t.Type())
 	b[1] = byte((l >> 8) & 0xFF)
 	b[2] = byte(l & 0xFF)
 	_, err := w.Write(b[0:3])
 	if err != nil {
 		return err
 	}
-	_, err = w.Write([]byte(n.Name))
+	_, err = w.Write([]byte(name))
 	if err != nil {
 		return err
 	}
-	return n.payload.store(w)
+	return t.store(w)
 }
 
 func (p End) store(w io.Writer) error {
@@ -140,13 +140,12 @@ func (p List) store(w io.Writer) error {
 
 func (p Compound) store(w io.Writer) error {
 	for k, v := range p {
-		err := Tag{Name: k, Type: v.Type(), payload: v}.Store(w)
+		err := StoreTag(w, v, k)
 		if err != nil {
 			return err
 		}
 	}
-	end := Tag{Name: "", Type: TypeEnd, payload: nil}
-	return end.Store(w)
+	return StoreTag(w, End{}, "")
 }
 
 func (p IntArray) store(w io.Writer) error {
@@ -179,21 +178,21 @@ func (p LongArray) store(w io.Writer) error {
 	return err
 }
 
-// StoreCompressed writes n to w, compressed via gzip.
-func StoreCompressed(w io.Writer, n Tag) error {
+// StoreCompressed writes t to w, compressed via gzip.
+func StoreCompressed(w io.Writer, t Tag, name String) error {
 	comp := gzip.NewWriter(w)
 	defer comp.Close()
-	return StoreUncompressed(comp, n)
+	return StoreUncompressed(comp, t, name)
 }
 
-// StoreUncompressed writes n to w, not compressing it. This is not
+// StoreUncompressed writes t to w, not compressing it. This is not
 // usually useful except for debugging.
-func StoreUncompressed(w io.Writer, n Tag) error {
-	return n.Store(w)
+func StoreUncompressed(w io.Writer, t Tag, name String) error {
+	return StoreTag(w, t, name)
 }
 
 // Store is just an alias for StoreCompressed, since the Tag spec
 // says everything is gzipped.
-func Store(w io.Writer, n Tag) error {
-	return StoreCompressed(w, n)
+func Store(w io.Writer, t Tag, name String) error {
+	return StoreCompressed(w, t, name)
 }

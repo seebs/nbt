@@ -175,20 +175,21 @@ func loadList(r io.Reader) (l List, e error) {
 // loadCompound loads a Compound tag, thus, loads other tags until it gets
 // a TypeEnd.
 func loadCompound(r io.Reader) (c Compound, e error) {
-	c = make(map[String]Payload)
+	c = make(map[String]Tag)
 	var t Tag
+	var name String
 	var err error
 	var errored error // an error we handle after the fact
-	for t, err = LoadUncompressed(r); err == nil && t.Type != TypeEnd; t, err = LoadUncompressed(r) {
+	for t, name, err = LoadUncompressed(r); err == nil && t.Type() != TypeEnd; t, name, err = LoadUncompressed(r) {
 		// fmt.Printf("loaded tag: [%v] %s\n", t.Type, t.Name)
-		_, ok := c[t.Name]
+		_, ok := c[name]
 		if ok {
 			// note the thing, but continue using the newer one
-			errored = fmt.Errorf("duplicate name '%s' in compound tag", t.Name)
+			errored = fmt.Errorf("duplicate name '%s' in compound tag", name)
 		}
-		c[t.Name] = t.payload
+		c[name] = t
 	}
-	if t.Type != TypeEnd {
+	if t.Type() != TypeEnd {
 		fmt.Printf("failed load compound\n")
 		return c, fmt.Errorf("unterminated compound tag")
 	}
@@ -196,10 +197,10 @@ func loadCompound(r io.Reader) (c Compound, e error) {
 }
 
 // LoadCompressed reads the first Tag found in the gzipped stream r.
-func LoadCompressed(r io.Reader) (Tag, error) {
+func LoadCompressed(r io.Reader) (Tag, String, error) {
 	uncomp, err := gzip.NewReader(r)
 	if err != nil {
-		return Tag{}, err
+		return nil, "", err
 	}
 	defer uncomp.Close()
 	return LoadUncompressed(uncomp)
@@ -207,66 +208,65 @@ func LoadCompressed(r io.Reader) (Tag, error) {
 
 // LoadUncompressed reads the first Tag found in the uncompressed
 // stream r.
-func LoadUncompressed(r io.Reader) (Tag, error) {
+func LoadUncompressed(r io.Reader) (Tag, String, error) {
 	var tagByte [1]byte
 	_, err := io.ReadFull(r, tagByte[0:1])
 	if err != nil {
-		return Tag{}, err
+		return nil, "", err
 	}
-	tag := Type(tagByte[0])
-	t := Tag{Type: tag}
-	if t.Type == TypeEnd {
-		return t, nil
+	typ := Type(tagByte[0])
+	if typ == TypeEnd {
+		return End{}, "", nil
 	}
 	// every tag other than TypeEnd has a name:
 	name, err := loadString(r)
 	if err != nil {
-		return t, err
+		return nil, "", err
 	}
-	t.Name = name
+	var t Tag
 	// fmt.Printf("load: %s [%v]\n", n.Name, n.Type)
-	switch t.Type {
+	switch typ {
 	case TypeByte:
-		t.payload, err = loadByte(r)
+		t, err = loadByte(r)
 	case TypeShort:
-		t.payload, err = loadShort(r)
+		t, err = loadShort(r)
 	case TypeInt:
-		t.payload, err = loadInt(r)
+		t, err = loadInt(r)
 	case TypeLong:
-		t.payload, err = loadLong(r)
+		t, err = loadLong(r)
 	case TypeFloat:
-		t.payload, err = loadFloat(r)
+		t, err = loadFloat(r)
 	case TypeDouble:
-		t.payload, err = loadDouble(r)
+		t, err = loadDouble(r)
 	case TypeByteArray:
-		t.payload, err = loadByteArray(r)
+		t, err = loadByteArray(r)
 	case TypeString:
-		t.payload, err = loadString(r)
+		t, err = loadString(r)
 	case TypeList:
-		t.payload, err = loadList(r)
+		t, err = loadList(r)
 	case TypeCompound:
-		t.payload, err = loadCompound(r)
+		t, err = loadCompound(r)
 	case TypeIntArray:
-		t.payload, err = loadIntArray(r)
+		t, err = loadIntArray(r)
 	case TypeLongArray:
-		t.payload, err = loadLongArray(r)
+		t, err = loadLongArray(r)
 	default:
-		err = fmt.Errorf("unsupported tag type %v", t.Type)
+		err = fmt.Errorf("unsupported tag type %v", typ)
 	}
 	if err != nil {
-		fmt.Printf("failed to load %s: %s\n", t.Name, err)
+		fmt.Printf("failed to load %s: %s\n", name, err)
 	}
-	return t, err
+	return t, name, err
 }
 
 // Load attempts to determine whether the stream r is compressed or not,
 // and use LoadCompressed/LoadUncompressed accordingly.
-func Load(r io.Reader) (Tag, error) {
+func Load(r io.Reader) (Tag, String, error) {
 	buf := bufio.NewReader(r)
 	header, err := buf.Peek(512)
 	// couldn't read the thing
 	if err != nil && err != io.EOF {
-		return Tag{}, err
+		return nil, "", err
 	}
 	readBuf := bytes.NewBuffer(header)
 	gz, err := gzip.NewReader(readBuf)

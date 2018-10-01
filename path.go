@@ -26,7 +26,7 @@ var (
 )
 
 func PathWrongType(t Tag, idx interface{}) error {
-	return fmt.Errorf("path component type mismatch: %v can't be indexed by %T.", t.Type, idx)
+	return fmt.Errorf("path component type mismatch: %v can't be indexed by %T.", t.Type(), idx)
 }
 
 func PathNoEntry(s String) error {
@@ -39,32 +39,32 @@ func PathNoIndex(i Int) error {
 
 // Follow tries to follow a given name to a new tag.
 func (s String) Follow(t Tag) (Tag, error) {
-	if t.Type != TypeCompound {
+	if t.Type() != TypeCompound {
 		// try to handle integer indexes that were passed in as strings
 		i, err := strconv.ParseInt(string(s), 10, 32)
 		if err == nil {
 			return Int(i).Follow(t)
 		}
-		return Tag{}, PathWrongType(t, s)
+		return nil, PathWrongType(t, s)
 	}
-	out, ok := t.Element(s)
+	out, ok := TagElement(t, s)
 	if !ok {
-		return Tag{}, PathNoEntry(s)
+		return nil, PathNoEntry(s)
 	}
 	return out, nil
 }
 
 // Follow tries to follow a given index to a new tag.
 func (i Int) Follow(t Tag) (Tag, error) {
-	switch t.Type {
+	switch t.Type() {
 	case TypeList, TypeByteArray, TypeIntArray, TypeLongArray:
-		out, ok := t.Element(i)
+		out, ok := TagElement(t, i)
 		if !ok {
-			return Tag{}, PathNoIndex(i)
+			return nil, PathNoIndex(i)
 		}
 		return out, nil
 	default:
-		return Tag{}, PathWrongType(t, i)
+		return nil, PathWrongType(t, i)
 	}
 }
 
