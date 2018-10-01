@@ -747,7 +747,7 @@ func (l *List) loadData(r io.Reader, count int) (err error) {
 	case TypeByte:
 		raw := make([]Byte, count)
 		for i := 0; i < count; i++ {
-			raw[i], err = LoadByte(r)
+			raw[i], err = loadByte(r)
 			if err!= nil {
 				raw = raw[:i]
 				break
@@ -759,7 +759,7 @@ func (l *List) loadData(r io.Reader, count int) (err error) {
 	case TypeShort:
 		raw := make([]Short, count)
 		for i := 0; i < count; i++ {
-			raw[i], err = LoadShort(r)
+			raw[i], err = loadShort(r)
 			if err!= nil {
 				raw = raw[:i]
 				break
@@ -771,7 +771,7 @@ func (l *List) loadData(r io.Reader, count int) (err error) {
 	case TypeInt:
 		raw := make([]Int, count)
 		for i := 0; i < count; i++ {
-			raw[i], err = LoadInt(r)
+			raw[i], err = loadInt(r)
 			if err!= nil {
 				raw = raw[:i]
 				break
@@ -783,7 +783,7 @@ func (l *List) loadData(r io.Reader, count int) (err error) {
 	case TypeLong:
 		raw := make([]Long, count)
 		for i := 0; i < count; i++ {
-			raw[i], err = LoadLong(r)
+			raw[i], err = loadLong(r)
 			if err!= nil {
 				raw = raw[:i]
 				break
@@ -795,7 +795,7 @@ func (l *List) loadData(r io.Reader, count int) (err error) {
 	case TypeFloat:
 		raw := make([]Float, count)
 		for i := 0; i < count; i++ {
-			raw[i], err = LoadFloat(r)
+			raw[i], err = loadFloat(r)
 			if err!= nil {
 				raw = raw[:i]
 				break
@@ -807,7 +807,7 @@ func (l *List) loadData(r io.Reader, count int) (err error) {
 	case TypeDouble:
 		raw := make([]Double, count)
 		for i := 0; i < count; i++ {
-			raw[i], err = LoadDouble(r)
+			raw[i], err = loadDouble(r)
 			if err!= nil {
 				raw = raw[:i]
 				break
@@ -819,7 +819,7 @@ func (l *List) loadData(r io.Reader, count int) (err error) {
 	case TypeByteArray:
 		raw := make([]ByteArray, count)
 		for i := 0; i < count; i++ {
-			raw[i], err = LoadByteArray(r)
+			raw[i], err = loadByteArray(r)
 			if err!= nil {
 				raw = raw[:i]
 				break
@@ -831,7 +831,7 @@ func (l *List) loadData(r io.Reader, count int) (err error) {
 	case TypeString:
 		raw := make([]String, count)
 		for i := 0; i < count; i++ {
-			raw[i], err = LoadString(r)
+			raw[i], err = loadString(r)
 			if err!= nil {
 				raw = raw[:i]
 				break
@@ -843,7 +843,7 @@ func (l *List) loadData(r io.Reader, count int) (err error) {
 	case TypeList:
 		raw := make([]List, count)
 		for i := 0; i < count; i++ {
-			raw[i], err = LoadList(r)
+			raw[i], err = loadList(r)
 			if err!= nil {
 				raw = raw[:i]
 				break
@@ -855,7 +855,7 @@ func (l *List) loadData(r io.Reader, count int) (err error) {
 	case TypeCompound:
 		raw := make([]Compound, count)
 		for i := 0; i < count; i++ {
-			raw[i], err = LoadCompound(r)
+			raw[i], err = loadCompound(r)
 			if err!= nil {
 				raw = raw[:i]
 				break
@@ -867,7 +867,7 @@ func (l *List) loadData(r io.Reader, count int) (err error) {
 	case TypeIntArray:
 		raw := make([]IntArray, count)
 		for i := 0; i < count; i++ {
-			raw[i], err = LoadIntArray(r)
+			raw[i], err = loadIntArray(r)
 			if err!= nil {
 				raw = raw[:i]
 				break
@@ -879,7 +879,7 @@ func (l *List) loadData(r io.Reader, count int) (err error) {
 	case TypeLongArray:
 		raw := make([]LongArray, count)
 		for i := 0; i < count; i++ {
-			raw[i], err = LoadLongArray(r)
+			raw[i], err = loadLongArray(r)
 			if err!= nil {
 				raw = raw[:i]
 				break

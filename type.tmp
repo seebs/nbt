@@ -106,7 +106,7 @@ func (l *List) loadData(r io.Reader, count int) (err error) {
 	case Type{{.}}:
 		raw := make([]{{.}}, count)
 		for i := 0; i < count; i++ {
-			raw[i], err = Load{{.}}(r)
+			raw[i], err = load{{.}}(r)
 			if err!= nil {
 				raw = raw[:i]
 				break

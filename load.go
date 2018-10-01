@@ -12,8 +12,8 @@ import (
 
 // Functions related to loading NBT tags from streams.
 
-// LoadByte loads a Byte payload.
-func LoadByte(r io.Reader) (b Byte, e error) {
+// loadByte loads a Byte payload.
+func loadByte(r io.Reader) (b Byte, e error) {
 	var buf [1]byte
 	_, err := io.ReadFull(r, buf[0:1])
 	if err != nil {
@@ -22,8 +22,8 @@ func LoadByte(r io.Reader) (b Byte, e error) {
 	return Byte(buf[0]), nil
 }
 
-// LoadShort loads a Short payload.
-func LoadShort(r io.Reader) (s Short, e error) {
+// loadShort loads a Short payload.
+func loadShort(r io.Reader) (s Short, e error) {
 	var buf [2]byte
 	_, err := io.ReadFull(r, buf[0:2])
 	if err != nil {
@@ -32,8 +32,8 @@ func LoadShort(r io.Reader) (s Short, e error) {
 	return Short(int16(buf[0])<<8 | int16(buf[1])), nil
 }
 
-// LoadInt loads an Int payload.
-func LoadInt(r io.Reader) (i Int, e error) {
+// loadInt loads an Int payload.
+func loadInt(r io.Reader) (i Int, e error) {
 	var buf [4]byte
 	_, err := io.ReadFull(r, buf[0:4])
 	if err != nil {
@@ -42,8 +42,8 @@ func LoadInt(r io.Reader) (i Int, e error) {
 	return Int(int32(buf[0])<<24 | int32(buf[1])<<16 | int32(buf[2])<<8 | int32(buf[3])), nil
 }
 
-// LoadLong loads a Long payload.
-func LoadLong(r io.Reader) (l Long, e error) {
+// loadLong loads a Long payload.
+func loadLong(r io.Reader) (l Long, e error) {
 	var buf [8]byte
 	_, err := io.ReadFull(r, buf[0:8])
 	if err != nil {
@@ -60,8 +60,8 @@ func LoadLong(r io.Reader) (l Long, e error) {
 			int64(buf[7])<<0), nil
 }
 
-// LoadFloat loads a Float payload.
-func LoadFloat(r io.Reader) (f Float, e error) {
+// loadFloat loads a Float payload.
+func loadFloat(r io.Reader) (f Float, e error) {
 	var buf [4]byte
 	_, err := io.ReadFull(r, buf[0:4])
 	if err != nil {
@@ -70,8 +70,8 @@ func LoadFloat(r io.Reader) (f Float, e error) {
 	return Float(math.Float32frombits(uint32(buf[0])<<24 | uint32(buf[1])<<16 | uint32(buf[2])<<8 | uint32(buf[3]))), nil
 }
 
-// LoadDouble loads a Double payload.
-func LoadDouble(r io.Reader) (d Double, e error) {
+// loadDouble loads a Double payload.
+func loadDouble(r io.Reader) (d Double, e error) {
 	var buf [8]byte
 	_, err := io.ReadFull(r, buf[0:8])
 	if err != nil {
@@ -87,10 +87,10 @@ func LoadDouble(r io.Reader) (d Double, e error) {
 		uint64(buf[7])<<0)), nil
 }
 
-// LoadByteArray loads a byte array, which has a leading Int indicating
+// loadByteArray loads a byte array, which has a leading Int indicating
 // how many bytes it contains.
-func LoadByteArray(r io.Reader) (b ByteArray, e error) {
-	l, err := LoadInt(r)
+func loadByteArray(r io.Reader) (b ByteArray, e error) {
+	l, err := loadInt(r)
 	if err != nil {
 		return b, err
 	}
@@ -102,16 +102,16 @@ func LoadByteArray(r io.Reader) (b ByteArray, e error) {
 	return *(*[]int8)(unsafe.Pointer(&buf)), err
 }
 
-// LoadIntArray loads an Int array, which has a leading Int indicating
+// loadIntArray loads an Int array, which has a leading Int indicating
 // how many Ints it contains.
-func LoadIntArray(r io.Reader) (ia IntArray, e error) {
-	l, err := LoadInt(r)
+func loadIntArray(r io.Reader) (ia IntArray, e error) {
+	l, err := loadInt(r)
 	if err != nil {
 		return ia, err
 	}
 	buf := make([]Int, int(l))
 	for i := 0; i < int(l); i++ {
-		buf[i], e = LoadInt(r)
+		buf[i], e = loadInt(r)
 		if e != nil {
 			return ia, e
 		}
@@ -119,16 +119,16 @@ func LoadIntArray(r io.Reader) (ia IntArray, e error) {
 	return buf, nil
 }
 
-// LoadLongArray loads an Int array, which has a leading Int indicating
+// loadLongArray loads an Int array, which has a leading Int indicating
 // how many Long it contains.
-func LoadLongArray(r io.Reader) (ia LongArray, e error) {
-	l, err := LoadInt(r)
+func loadLongArray(r io.Reader) (ia LongArray, e error) {
+	l, err := loadInt(r)
 	if err != nil {
 		return ia, err
 	}
 	buf := make([]Long, int(l))
 	for i := 0; i < int(l); i++ {
-		buf[i], e = LoadLong(r)
+		buf[i], e = loadLong(r)
 		if e != nil {
 			return ia, e
 		}
@@ -136,10 +136,10 @@ func LoadLongArray(r io.Reader) (ia LongArray, e error) {
 	return buf, nil
 }
 
-// LoadString loads a String payload, reading first a Short payload
+// loadString loads a String payload, reading first a Short payload
 // for the string's length, then that many bytes of string data.
-func LoadString(r io.Reader) (s String, e error) {
-	sl, err := LoadShort(r)
+func loadString(r io.Reader) (s String, e error) {
+	sl, err := loadShort(r)
 	if err != nil {
 		return s, err
 	}
@@ -151,16 +151,16 @@ func LoadString(r io.Reader) (s String, e error) {
 	return String(buf), nil
 }
 
-// LoadList loads a List tag.
-func LoadList(r io.Reader) (l List, e error) {
-	ttype, e := LoadByte(r)
+// loadList loads a List tag.
+func loadList(r io.Reader) (l List, e error) {
+	ttype, e := loadByte(r)
 	if e != nil {
 		return l, e
 	}
 	if Type(ttype) < TypeEnd || Type(ttype) >= TypeMax {
 		return l, fmt.Errorf("invalid tag type for list: %d", ttype)
 	}
-	count, e := LoadInt(r)
+	count, e := loadInt(r)
 	if e != nil {
 		return l, e
 	}
@@ -172,9 +172,9 @@ func LoadList(r io.Reader) (l List, e error) {
 	return l, e
 }
 
-// LoadCompound loads a Compound tag, thus, loads other tags until it gets
+// loadCompound loads a Compound tag, thus, loads other tags until it gets
 // a TypeEnd.
-func LoadCompound(r io.Reader) (c Compound, e error) {
+func loadCompound(r io.Reader) (c Compound, e error) {
 	c = make(map[String]Payload)
 	var t Tag
 	var err error
@@ -219,7 +219,7 @@ func LoadUncompressed(r io.Reader) (Tag, error) {
 		return t, nil
 	}
 	// every tag other than TypeEnd has a name:
-	name, err := LoadString(r)
+	name, err := loadString(r)
 	if err != nil {
 		return t, err
 	}
@@ -227,29 +227,29 @@ func LoadUncompressed(r io.Reader) (Tag, error) {
 	// fmt.Printf("load: %s [%v]\n", n.Name, n.Type)
 	switch t.Type {
 	case TypeByte:
-		t.payload, err = LoadByte(r)
+		t.payload, err = loadByte(r)
 	case TypeShort:
-		t.payload, err = LoadShort(r)
+		t.payload, err = loadShort(r)
 	case TypeInt:
-		t.payload, err = LoadInt(r)
+		t.payload, err = loadInt(r)
 	case TypeLong:
-		t.payload, err = LoadLong(r)
+		t.payload, err = loadLong(r)
 	case TypeFloat:
-		t.payload, err = LoadFloat(r)
+		t.payload, err = loadFloat(r)
 	case TypeDouble:
-		t.payload, err = LoadDouble(r)
+		t.payload, err = loadDouble(r)
 	case TypeByteArray:
-		t.payload, err = LoadByteArray(r)
+		t.payload, err = loadByteArray(r)
 	case TypeString:
-		t.payload, err = LoadString(r)
+		t.payload, err = loadString(r)
 	case TypeList:
-		t.payload, err = LoadList(r)
+		t.payload, err = loadList(r)
 	case TypeCompound:
-		t.payload, err = LoadCompound(r)
+		t.payload, err = loadCompound(r)
 	case TypeIntArray:
-		t.payload, err = LoadIntArray(r)
+		t.payload, err = loadIntArray(r)
 	case TypeLongArray:
-		t.payload, err = LoadLongArray(r)
+		t.payload, err = loadLongArray(r)
 	default:
 		err = fmt.Errorf("unsupported tag type %v", t.Type)
 	}
